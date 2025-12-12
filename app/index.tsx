@@ -4,6 +4,7 @@ import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -14,12 +15,14 @@ import {
 } from "react-native";
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSignIn = () => {
     // Handle sign in logic here
     console.log("Sign in with:", email, password);
+    router.replace("/dashboard");
   };
 
   return (

@@ -38,6 +38,13 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="dashboard"
+          options={{
+            title: "Dashboard",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
