@@ -54,7 +54,7 @@ export function ThemedInput({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   label: {
     fontSize: 14,

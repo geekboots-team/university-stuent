@@ -3,6 +3,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { Image } from "expo-image";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -34,16 +35,20 @@ export default function LoginScreen() {
           {/* Header Section */}
           <View style={styles.headerSection}>
             <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <ThemedText style={styles.logoText}>US</ThemedText>
-              </View>
+              <Image
+                source={require("@/assets/images/students.png")}
+                style={styles.logoCircle}
+                resizeMode="contain"
+              />
             </View>
-            <ThemedText style={styles.brandName}>
-              UniversitySeniors.com
-            </ThemedText>
-            <ThemedText style={styles.tagline}>
-              &ldquo;Living it now&rdquo;
-            </ThemedText>
+            <View style={styles.logoText}>
+              <ThemedText style={styles.brandName}>
+                UniversitySeniors.com
+              </ThemedText>
+              <ThemedText style={styles.tagline}>
+                &ldquo;Living it now&rdquo;
+              </ThemedText>
+            </View>
           </View>
 
           {/* Form Section */}
@@ -69,7 +74,7 @@ export default function LoginScreen() {
 
             <View style={styles.forgotPassword}>
               <ThemedLink
-                href="/modal"
+                href="/forgot-password"
                 underline={false}
                 style={styles.forgotPasswordText}
               >
@@ -93,7 +98,7 @@ export default function LoginScreen() {
               <ThemedText style={styles.noAccountText}>
                 Don&apos;t have an account?{" "}
               </ThemedText>
-              <ThemedLink href="/modal" style={styles.createAccountText}>
+              <ThemedLink href="/register" style={styles.createAccountText}>
                 Create Account
               </ThemedLink>
             </View>
@@ -126,23 +131,19 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: "center",
+    gap: 5,
     marginBottom: 20,
   },
+  logoText: {
+    flex: 1,
+  },
   logoContainer: {
+    flex: 1,
     marginBottom: 16,
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#842d1c",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoText: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "bold",
+    width: 150,
+    height: 150,
   },
   brandName: {
     fontSize: 28,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secureText: {
-    color: "#999",
+    color: "#666",
     fontSize: 12,
   },
 });

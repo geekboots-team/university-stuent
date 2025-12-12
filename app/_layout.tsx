@@ -22,6 +22,22 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="register"
+          options={{
+            presentation: "modal",
+            title: "Create Account",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="forgot-password"
+          options={{
+            presentation: "modal",
+            title: "Forgot Password",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
