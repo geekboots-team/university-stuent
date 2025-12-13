@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 
 // Mock data for chat list
@@ -44,14 +45,19 @@ const chatList = [
 ];
 
 export default function ChatScreen() {
-  const handleChatPress = (chatId: string) => {
-    console.log("Open chat:", chatId);
+  const router = useRouter();
+
+  const handleChatPress = (chatId: string, userName: string) => {
+    router.push({
+      pathname: "/(dash)/individual-chat",
+      params: { chatId, userName },
+    });
   };
 
   const renderChatItem = ({ item }: { item: (typeof chatList)[0] }) => (
     <TouchableOpacity
       style={styles.chatItem}
-      onPress={() => handleChatPress(item.id)}
+      onPress={() => handleChatPress(item.id, item.name)}
       activeOpacity={0.7}
     >
       <View style={styles.avatar}>
