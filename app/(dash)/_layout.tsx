@@ -21,7 +21,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Home",
+          title: "Dashboard",
+          headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
@@ -31,6 +32,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
+          headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="message.fill" color={color} />
           ),
@@ -40,6 +42,7 @@ export default function TabLayout() {
         name="group-chat"
         options={{
           title: "Groups",
+          headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.3.fill" color={color} />
           ),

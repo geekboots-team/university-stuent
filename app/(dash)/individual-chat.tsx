@@ -141,9 +141,6 @@ export default function IndividualChatScreen() {
   const headerRight = (
     <View style={styles.headerActions}>
       <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-        <Ionicons name="call-outline" size={22} color={Colors.light.text} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
         <Ionicons
           name="ellipsis-vertical"
           size={22}

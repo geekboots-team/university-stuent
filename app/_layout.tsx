@@ -40,8 +40,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="(dash)"
           options={{
-            title: "Dashboard",
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen

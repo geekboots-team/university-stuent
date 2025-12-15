@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -84,10 +83,6 @@ export default function ChatScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Chats</ThemedText>
-      </View>
-
       <FlatList
         data={chatList}
         renderItem={renderChatItem}
@@ -95,10 +90,6 @@ export default function ChatScreen() {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
-
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
-        <Ionicons name="create-outline" size={24} color="#fff" />
-      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -106,7 +97,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 20,
   },
   header: {
     paddingHorizontal: 24,
