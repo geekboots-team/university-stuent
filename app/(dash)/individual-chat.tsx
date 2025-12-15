@@ -1,7 +1,8 @@
 import { ChatWindow, Message } from "@/components/chat-window";
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -114,10 +115,15 @@ export default function IndividualChatScreen() {
   const params = useLocalSearchParams<{ chatId: string; userName: string }>();
   const chatId = params.chatId || "1";
   const userData = getUserData(chatId);
+  const colorScheme = useColorScheme();
 
   const [messages, setMessages] = useState<Message[]>(() =>
     getMockMessages(chatId)
   );
+
+  const handleBack = useCallback(() => {
+    router.push("/(dash)/chat");
+  }, [router]);
 
   const handleSendMessage = useCallback((text: string) => {
     const newMessage: Message = {
@@ -134,34 +140,47 @@ export default function IndividualChatScreen() {
     console.log("Sending message:", text);
   }, []);
 
-  const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
-
-  const headerRight = (
-    <View style={styles.headerActions}>
-      <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-        <Ionicons
-          name="ellipsis-vertical"
-          size={22}
-          color={Colors.light.text}
-        />
-      </TouchableOpacity>
-    </View>
+  const headerRight = useCallback(
+    () => (
+      <View style={styles.headerActions}>
+        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
+          <Ionicons
+            name="ellipsis-vertical"
+            size={22}
+            color={Colors[colorScheme ?? "light"].tint}
+          />
+        </TouchableOpacity>
+      </View>
+    ),
+    []
   );
 
   return (
-    <ChatWindow
-      title={params.userName || userData.name}
-      subtitle={userData.status}
-      messages={messages}
-      currentUserId="current-user"
-      isGroupChat={false}
-      onSendMessage={handleSendMessage}
-      onBack={handleBack}
-      headerRight={headerRight}
-      inputPlaceholder="Type a message..."
-    />
+    <>
+      <Stack.Screen
+        options={{
+          title: params.userName || userData.name,
+          headerShown: true,
+          headerLeft: () => (
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons
+                name="chevron-back"
+                size={28}
+                color={Colors[colorScheme ?? "light"].tint}
+              />
+            </TouchableOpacity>
+          ),
+          headerRight: headerRight,
+        }}
+      />
+      <ChatWindow
+        messages={messages}
+        currentUserId="current-user"
+        isGroupChat={false}
+        onSendMessage={handleSendMessage}
+        inputPlaceholder="Type a message..."
+      />
+    </>
   );
 }
 
@@ -173,5 +192,9 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: 8,
     marginLeft: 4,
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 8,
   },
 });

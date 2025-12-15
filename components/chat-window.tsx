@@ -23,10 +23,6 @@ export interface Message {
 }
 
 export interface ChatWindowProps {
-  /** Title displayed in the header (user name or group name) */
-  title: string;
-  /** Optional subtitle (e.g., "Online", "12 members") */
-  subtitle?: string;
   /** Messages to display */
   messages: Message[];
   /** Current user's ID to determine message alignment */
@@ -35,29 +31,18 @@ export interface ChatWindowProps {
   isGroupChat?: boolean;
   /** Callback when send button is pressed */
   onSendMessage: (text: string) => void;
-  /** Callback when back button is pressed */
-  onBack?: () => void;
-  /** Custom avatar content (defaults to first letter or group icon) */
-  avatarContent?: React.ReactNode;
   /** Placeholder text for input */
   inputPlaceholder?: string;
-  /** Header right component (e.g., call button, menu) */
-  headerRight?: React.ReactNode;
   /** Whether the chat is loading */
   isLoading?: boolean;
 }
 
 export function ChatWindow({
-  title,
-  subtitle,
   messages,
   currentUserId,
   isGroupChat = false,
   onSendMessage,
-  onBack,
-  avatarContent,
   inputPlaceholder = "Type a message...",
-  headerRight,
   isLoading = false,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState("");
@@ -124,55 +109,8 @@ export function ChatWindow({
     );
   };
 
-  const renderAvatar = () => {
-    if (avatarContent) {
-      return avatarContent;
-    }
-
-    if (isGroupChat) {
-      return <Ionicons name="people" size={24} color="#fff" />;
-    }
-
-    return (
-      <ThemedText style={styles.avatarText}>
-        {title.charAt(0).toUpperCase()}
-      </ThemedText>
-    );
-  };
-
   return (
     <ThemedView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {onBack && (
-            <TouchableOpacity
-              onPress={onBack}
-              style={styles.backButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="chevron-back"
-                size={28}
-                color={Colors.light.text}
-              />
-            </TouchableOpacity>
-          )}
-          <View style={styles.avatar}>{renderAvatar()}</View>
-          <View style={styles.headerInfo}>
-            <ThemedText style={styles.headerTitle} numberOfLines={1}>
-              {title}
-            </ThemedText>
-            {subtitle && (
-              <ThemedText style={styles.headerSubtitle} numberOfLines={1}>
-                {subtitle}
-              </ThemedText>
-            )}
-          </View>
-        </View>
-        {headerRight && <View style={styles.headerRight}>{headerRight}</View>}
-      </View>
-
       {/* Messages List */}
       <KeyboardAvoidingView
         style={styles.messagesWrapper}
@@ -246,54 +184,6 @@ export function ChatWindow({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  backButton: {
-    marginRight: 8,
-    padding: 4,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.light.tint,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  avatarText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    opacity: 0.6,
-    marginTop: 2,
-  },
-  headerRight: {
-    marginLeft: 12,
   },
   messagesWrapper: {
     flex: 1,

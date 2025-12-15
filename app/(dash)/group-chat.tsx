@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 
 // Mock data for group chats
@@ -49,14 +50,19 @@ const groupChatList = [
 ];
 
 export default function GroupChatScreen() {
-  const handleGroupPress = (groupId: string) => {
-    console.log("Open group:", groupId);
+  const router = useRouter();
+
+  const handleGroupPress = (groupId: string, groupName: string) => {
+    router.push({
+      pathname: "/(dash)/group-individual-chat",
+      params: { groupId, groupName },
+    });
   };
 
   const renderGroupItem = ({ item }: { item: (typeof groupChatList)[0] }) => (
     <TouchableOpacity
       style={styles.groupItem}
-      onPress={() => handleGroupPress(item.id)}
+      onPress={() => handleGroupPress(item.id, item.name)}
       activeOpacity={0.7}
     >
       <View style={styles.avatar}>
@@ -88,10 +94,6 @@ export default function GroupChatScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Group Chats</ThemedText>
-      </View>
-
       <FlatList
         data={groupChatList}
         renderItem={renderGroupItem}
@@ -99,10 +101,6 @@ export default function GroupChatScreen() {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
-
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -110,7 +108,7 @@ export default function GroupChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 20,
   },
   header: {
     paddingHorizontal: 24,
@@ -188,24 +186,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
-  },
-  fab: {
-    position: "absolute",
-    bottom: 100,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.light.tint,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
 });

@@ -52,6 +52,14 @@ export default function TabLayout() {
         name="individual-chat"
         options={{
           href: null, // Hide from tab bar
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="group-individual-chat"
+        options={{
+          href: null, // Hide from tab bar
+          headerShown: true,
         }}
       />
     </Tabs>
