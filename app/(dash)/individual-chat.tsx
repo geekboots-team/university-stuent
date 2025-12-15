@@ -4,7 +4,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
 
 // Mock messages data - replace with actual API calls
 const getMockMessages = (chatId: string): Message[] => {
@@ -140,26 +140,16 @@ export default function IndividualChatScreen() {
     console.log("Sending message:", text);
   }, []);
 
-  const headerRight = useCallback(
-    () => (
-      <View style={styles.headerActions}>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-          <Ionicons
-            name="ellipsis-vertical"
-            size={22}
-            color={Colors[colorScheme ?? "light"].tint}
-          />
-        </TouchableOpacity>
-      </View>
-    ),
-    []
-  );
-
   return (
     <>
       <Stack.Screen
         options={{
           title: params.userName || userData.name,
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: Colors[colorScheme ?? "light"].tint,
+          },
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -170,7 +160,6 @@ export default function IndividualChatScreen() {
               />
             </TouchableOpacity>
           ),
-          headerRight: headerRight,
         }}
       />
       <ChatWindow

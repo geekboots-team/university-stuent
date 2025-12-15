@@ -22,6 +22,11 @@ export default function TabLayout() {
         name="dashboard"
         options={{
           title: "Dashboard",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: Colors[colorScheme ?? "light"].tint,
+          },
           headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
@@ -32,6 +37,11 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: Colors[colorScheme ?? "light"].tint,
+          },
           headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="message.fill" color={color} />
@@ -42,6 +52,11 @@ export default function TabLayout() {
         name="group-chat"
         options={{
           title: "Groups",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: Colors[colorScheme ?? "light"].tint,
+          },
           headerShown: true,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.3.fill" color={color} />

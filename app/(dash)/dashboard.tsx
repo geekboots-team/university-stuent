@@ -1,18 +1,18 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const handleChatPress = () => {
-    // Navigate to chat screen
-    console.log("Navigate to Chat");
+    router.push("/(dash)/chat");
   };
 
   const handleGroupChatPress = () => {
-    // Navigate to group chat screen
-    console.log("Navigate to Group Chat");
+    router.push("/(dash)/group-chat");
   };
 
   return (
@@ -20,7 +20,7 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <ThemedText style={styles.title}>Dashboard</ThemedText>
         <ThemedText style={styles.subtitle}>
-          Welcome to UniversitySeniors.com
+          Welcome to UniversitySeniors
         </ThemedText>
       </View>
 
@@ -31,7 +31,7 @@ export default function DashboardScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
+            <IconSymbol size={28} name="message.fill" color="#fff" />
           </View>
           <ThemedText style={styles.optionTitle}>Chat</ThemedText>
           <ThemedText style={styles.optionDescription}>
@@ -45,7 +45,7 @@ export default function DashboardScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name="people" size={28} color="#fff" />
+            <IconSymbol size={28} name="person.3.fill" color="#fff" />
           </View>
           <ThemedText style={styles.optionTitle}>Group Chat</ThemedText>
           <ThemedText style={styles.optionDescription}>

@@ -231,28 +231,6 @@ export default function GroupIndividualChatScreen() {
     console.log("Sending group message:", text);
   }, []);
 
-  const headerRight = useCallback(
-    () => (
-      <View style={styles.headerActions}>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-          <Ionicons
-            name="people"
-            size={22}
-            color={Colors[colorScheme ?? "light"].tint}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-          <Ionicons
-            name="ellipsis-vertical"
-            size={22}
-            color={Colors[colorScheme ?? "light"].tint}
-          />
-        </TouchableOpacity>
-      </View>
-    ),
-    [colorScheme]
-  );
-
   return (
     <>
       <Stack.Screen
@@ -268,13 +246,20 @@ export default function GroupIndividualChatScreen() {
               />
             </TouchableOpacity>
           ),
-          headerRight: headerRight,
           headerTitle: () => (
             <View style={styles.headerTitle}>
-              <ThemedText style={styles.headerTitleText}>
+              <ThemedText
+                style={styles.headerTitleText}
+                lightColor={Colors.light.tint}
+                darkColor={Colors.dark.tint}
+              >
                 {params.groupName || groupData.name}
               </ThemedText>
-              <ThemedText style={styles.headerSubtitle}>
+              <ThemedText
+                style={styles.headerSubtitle}
+                lightColor={Colors.light.tint}
+                darkColor={Colors.dark.tint}
+              >
                 {groupData.members} members
               </ThemedText>
             </View>
@@ -314,6 +299,6 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 12,
-    opacity: 0.6,
+    opacity: 0.8,
   },
 });
