@@ -1,11 +1,17 @@
 import { ThemedButton } from "@/components/themed-button";
+import { ThemedDropdown } from "@/components/themed-dropdown";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useAppContext } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
+import { University } from "@/models/university.model";
 import { Image } from "expo-image";
-import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,12 +20,49 @@ import {
 } from "react-native";
 
 export default function RegisterScreen() {
+  const { studentTkn, loading, setLoading } = useAppContext();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [university, setUniversity] = useState<string>("");
+  const [universities, setUniversities] = useState<University[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
+
+  useEffect(() => {
+    if (studentTkn) {
+      router.push("/dashboard");
+    }
+  }, [studentTkn, router]);
+
+  const fetchUniversities = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("university")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (error) {
+        Alert.alert("Error", "Failed to fetch universities");
+        return;
+      }
+
+      if (data) {
+        setUniversities(data);
+      }
+    } catch {
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading]);
+
+  useEffect(() => {
+    fetchUniversities();
+  }, [fetchUniversities]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -30,15 +73,19 @@ export default function RegisterScreen() {
     if (!lastName.trim()) {
       newErrors.lastName = "Last name is required";
     }
+    if (!university) {
+      newErrors.university = "Please select a university";
+    }
     if (!email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Please enter a valid email";
     }
+
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
     if (!confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
@@ -50,10 +97,91 @@ export default function RegisterScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (validateForm()) {
       // Handle registration logic here
-      console.log("Register with:", { firstName, lastName, email, password });
+      const { data: existingStudent, error: checkError } = await supabase
+        .from("students")
+        .select("email")
+        .eq("email", email)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        Alert.alert("Error", "Error checking existing student");
+        return;
+      }
+
+      if (existingStudent) {
+        Alert.alert("Error", "Student with this email already exists");
+        return;
+      }
+
+      // Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            is_super_admin: false,
+          },
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}verify`,
+        },
+      });
+
+      if (authError) {
+        Alert.alert("Error", authError.message);
+        return;
+      }
+
+      if (!authData.user) {
+        Alert.alert("Error", "Failed to create user account");
+        return;
+      }
+
+      // Insert student data into student table
+      // Get selected university details to extract language
+      const selectedUniversity = universities.find(
+        (uni) => uni.id === university
+      );
+
+      const { error: studentError } = await supabase.from("students").insert({
+        id: authData.user.id, // Use Auth user ID as primary key
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        role: "student",
+        language: selectedUniversity?.language || null,
+        status: "pending",
+      });
+
+      if (studentError) {
+        Alert.alert("Error", "Failed to create student profile");
+        return;
+      }
+
+      const { error: uniError } = await supabase
+        .from("applied_universities")
+        .insert({
+          user_id: authData.user.id, // Use Auth user ID as primary key
+          university_id: university,
+          course_id: null,
+          status: "pending",
+        });
+
+      if (uniError) {
+        Alert.alert("Error", "Failed to create university application");
+        return;
+      }
+
+      Alert.alert(
+        "Success",
+        "Account created successfully! Please check your email to verify your account."
+      );
+
+      // Redirect to login or verification page
+      router.push("/");
     }
   };
 
@@ -120,6 +248,18 @@ export default function RegisterScreen() {
               error={errors.email}
             />
 
+            <ThemedDropdown
+              label="University"
+              placeholder="Select your university"
+              options={universities.map((uni) => ({
+                label: uni.name,
+                value: uni.id,
+              }))}
+              value={university}
+              onSelect={setUniversity}
+              error={errors.university}
+            />
+
             <ThemedInput
               label="Password"
               placeholder="Create a password"
@@ -154,11 +294,11 @@ export default function RegisterScreen() {
               <ThemedText style={styles.termsText}>
                 By creating an account, you agree to our{" "}
               </ThemedText>
-              <ThemedLink href="/modal" style={styles.termsLink}>
+              <ThemedLink href="/" style={styles.termsLink}>
                 Terms of Service
               </ThemedLink>
               <ThemedText style={styles.termsText}> and </ThemedText>
-              <ThemedLink href="/modal" style={styles.termsLink}>
+              <ThemedLink href="/" style={styles.termsLink}>
                 Privacy Policy
               </ThemedLink>
             </View>

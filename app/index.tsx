@@ -3,10 +3,14 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useAppContext } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,14 +19,68 @@ import {
 } from "react-native";
 
 export default function LoginScreen() {
+  const { loginStudent, studentTkn, loading, setLoading } = useAppContext();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignIn = () => {
-    // Handle sign in logic here
-    console.log("Sign in with:", email, password);
-    router.replace("/dashboard");
+  useEffect(() => {
+    if (studentTkn) {
+      router.push("/dashboard");
+    }
+  }, [studentTkn, router]);
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) {
+        Alert.alert("Login Failed", error.message);
+        return;
+      }
+
+      const { data: userData } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", data?.user?.id)
+        .single();
+
+      if (userData?.status === "active" || userData?.status === "approved") {
+        Alert.alert("Success", "Login successful!");
+
+        loginStudent(
+          data?.session?.access_token || "",
+          data?.session?.refresh_token || "",
+          data?.user?.id,
+          userData.usrName,
+          userData.role,
+          userData.status,
+          userData.language
+        );
+
+        router.replace("/dashboard");
+      } else {
+        Alert.alert(
+          "Error",
+          "Your account is not yet approved/suspended. Please contact support."
+        );
+        setLoading(false);
+        return;
+      }
+    } catch {
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,10 +144,17 @@ export default function LoginScreen() {
             </View>
 
             <ThemedButton
-              title="Sign In"
+              title={loading ? "Signing In..." : "Sign In"}
               onPress={handleSignIn}
               style={styles.signInButton}
+              disabled={loading}
             />
+            {loading && (
+              <ActivityIndicator
+                style={styles.loadingIndicator}
+                color="#6200ee"
+              />
+            )}
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -187,6 +252,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  loadingIndicator: {
+    marginTop: -16,
+    marginBottom: 16,
   },
   divider: {
     flexDirection: "row",

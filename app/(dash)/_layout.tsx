@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,16 +12,24 @@ import {
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-
 
 function TabBarMenu({ color }: { color: string }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { studentTkn, logoutStudent } = useAppContext();
+
+  useEffect(() => {
+    if (!studentTkn) {
+      router.replace("/");
+    }
+  }, [studentTkn, router]);
 
   const handleLogout = () => {
     setMenuVisible(false);
+    logoutStudent();
     router.replace("/");
   };
 
