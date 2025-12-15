@@ -3,14 +3,11 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
-import { router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -72,10 +69,6 @@ export default function RegisterScreen() {
         >
           {/* Header Section */}
           <View style={styles.headerSection}>
-            <Pressable onPress={() => router.back()} style={styles.backButton}>
-              <IconSymbol size={24} color="#842d1c" name="chevron.left" />
-              <ThemedText style={styles.backButtonText}>Back</ThemedText>
-            </Pressable>
             <View style={styles.logoContainer}>
               <Image
                 source={require("@/assets/images/students.png")}

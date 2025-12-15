@@ -1,7 +1,7 @@
 import { ChatWindow, Message } from "@/components/chat-window";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme.web";
-import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
@@ -153,8 +153,8 @@ export default function IndividualChatScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons
-                name="chevron-back"
+              <IconSymbol
+                name="chevron.left"
                 size={28}
                 color={Colors[colorScheme ?? "light"].tint}
               />

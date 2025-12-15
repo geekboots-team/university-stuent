@@ -24,6 +24,7 @@ const MAPPING = {
   "chevron.left": "chevron-left",
   "message.fill": "chat",
   "person.3.fill": "groups",
+  ellipsis: "more-vert",
 } as IconMapping;
 
 /**

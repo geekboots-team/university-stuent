@@ -1,10 +1,111 @@
-import { Tabs } from "expo-router";
-import React from "react";
+import { Tabs, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+
+function TabBarMenu({ color }: { color: string }) {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+
+  const handleLogout = () => {
+    setMenuVisible(false);
+    router.replace("/");
+  };
+
+  return (
+    <View style={styles.tabBarMenuContainer}>
+      <TouchableOpacity onPress={() => setMenuVisible(true)}>
+        <IconSymbol size={28} name="ellipsis" color={color} />
+      </TouchableOpacity>
+
+      <Modal
+        transparent
+        visible={menuVisible}
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View
+            style={[
+              styles.dropdown,
+              {
+                backgroundColor: Colors[colorScheme ?? "light"].background,
+                borderColor: Colors[colorScheme ?? "light"].icon,
+              },
+            ]}
+          >
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+              <Text
+                style={[
+                  styles.menuText,
+                  { color: Colors[colorScheme ?? "light"].text },
+                ]}
+              >
+                Logout
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  menuButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+  },
+  dropdown: {
+    marginBottom: 60,
+    marginRight: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    minWidth: 140,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  menuText: {
+    fontSize: 16,
+  },
+  tabBarMenuContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -61,6 +162,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.3.fill" color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="menu"
+        options={{
+          title: "Menu",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarMenu color={color} />,
         }}
       />
       <Tabs.Screen
