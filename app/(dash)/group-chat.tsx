@@ -1,65 +1,181 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
+import { useAppContext } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
+import { Groups } from "@/models/group.model";
+import { AppliedUniversity } from "@/models/student.model";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-
-// Mock data for group chats
-const groupChatList = [
-  {
-    id: "1",
-    name: "CS Study Group",
-    lastMessage: "Alice: Anyone up for study session?",
-    time: "3:45 PM",
-    members: 12,
-    unread: 5,
-  },
-  {
-    id: "2",
-    name: "Project Team Alpha",
-    lastMessage: "Bob: Meeting at 5 PM",
-    time: "2:00 PM",
-    members: 5,
-    unread: 0,
-  },
-  {
-    id: "3",
-    name: "Campus Events",
-    lastMessage: "Admin: New event this weekend!",
-    time: "11:30 AM",
-    members: 150,
-    unread: 12,
-  },
-  {
-    id: "4",
-    name: "Math 101 Help",
-    lastMessage: "Charlie: Can someone explain...",
-    time: "Yesterday",
-    members: 28,
-    unread: 0,
-  },
-  {
-    id: "5",
-    name: "Senior Year Squad",
-    lastMessage: "You: Let's plan the trip!",
-    time: "Yesterday",
-    members: 8,
-    unread: 0,
-  },
-];
+import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function GroupChatScreen() {
   const router = useRouter();
+  const { studentTkn, studentId, studentRole, loading, setLoading } =
+    useAppContext();
+  const [groups, setGroups] = useState<Groups[]>([]);
+  const [studentUniversity, setStudentUniversity] = useState<string[]>([]);
+
+  const [studentCourses, setStudentCourses] = useState<string[]>([]);
+  const [availableUniversities, setAvailableUniversities] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [availableCourses, setAvailableCourses] = useState<
+    { id: string; name: string; university_id: string }[]
+  >([]);
 
   const handleGroupPress = (groupId: string, groupName: string) => {
     router.push({
       pathname: "/(dash)/group-individual-chat",
-      params: { groupId, groupName },
+      params: { groupId, groupName, senderType: studentRole },
     });
   };
 
-  const renderGroupItem = ({ item }: { item: (typeof groupChatList)[0] }) => (
+  const fetchAvailableUniversities = useCallback(async () => {
+    try {
+      if (studentUniversity.length === 0) return;
+
+      const { data, error } = await supabase
+        .from("university")
+        .select("id, name")
+        .in("id", studentUniversity)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setAvailableUniversities(data);
+      }
+    } catch {
+      Alert.alert("Error", "Error fetching universities!");
+    }
+  }, [studentUniversity]);
+
+  const fetchAvailableCourses = useCallback(
+    async (universityId?: string) => {
+      try {
+        if (studentCourses.length === 0) return;
+
+        let query = supabase
+          .from("courses")
+          .select("id, name, university_id")
+          .in("id", studentCourses)
+          .order("name", { ascending: true });
+
+        if (universityId && universityId !== "all") {
+          query = query.eq("university_id", universityId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        if (data) {
+          setAvailableCourses(data);
+        }
+      } catch {
+        Alert.alert("Error", "Error fetching courses!");
+      }
+    },
+    [studentCourses]
+  );
+
+  const fetchUsrProf = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("applied_universities")
+        .select("*")
+        .eq("status", "active")
+        .eq("user_id", studentId!);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && !error) {
+        const activeUni = data
+          .map((uni: AppliedUniversity) => uni.university_id)
+          .filter((id): id is string => !!id);
+        setStudentUniversity(activeUni);
+
+        const activeCourses = data
+          .map((uni: AppliedUniversity) => uni.course_id)
+          .filter((id): id is string => !!id);
+        setStudentCourses(activeCourses);
+      } else if (error) {
+        Alert.alert("Error", "Error fetching universities!");
+        return;
+      }
+    } catch {
+      Alert.alert("Error", "Error fetching universities!");
+    }
+  }, [studentId]);
+
+  useEffect(() => {
+    if (studentTkn) fetchUsrProf();
+  }, [studentTkn, fetchUsrProf]);
+
+  useEffect(() => {
+    if (studentUniversity.length > 0) {
+      fetchAvailableUniversities();
+    }
+  }, [studentUniversity, fetchAvailableUniversities]);
+
+  useEffect(() => {
+    if (studentCourses.length > 0) {
+      fetchAvailableCourses();
+    }
+  }, [studentCourses, fetchAvailableCourses]);
+
+  const fetchGroups = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("groups")
+        .select("*, university(name), courses(name), clubs(name)")
+        .or(`group_for.eq.${studentRole},group_for.eq.all`)
+        .in("university_id", studentUniversity)
+        .order("name", { ascending: true });
+
+      if (error) {
+        Alert.alert("Error", "Failed to fetch groups");
+        return;
+      }
+
+      const filteredData = data.filter((group) => {
+        // If group has a course requirement, check if student's course matches
+        if (group.course_id) {
+          return studentCourses.includes(group.course_id);
+        }
+        // If no course requirement, include the group
+        return true;
+      });
+
+      setGroups((prev) => {
+        const newGroups = filteredData.filter(
+          (group) => !prev.some((existing) => existing.id === group.id)
+        );
+        return [...prev, ...newGroups];
+      });
+    } catch {
+      Alert.alert("Error", "Failed to fetch groups");
+    } finally {
+      setLoading(false);
+    }
+  }, [studentRole, setLoading, studentCourses, studentUniversity]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [studentUniversity, fetchGroups]);
+
+  const renderGroupItem = ({ item }: { item: Groups }) => (
     <TouchableOpacity
       style={styles.groupItem}
       onPress={() => handleGroupPress(item.id, item.name)}
@@ -71,22 +187,13 @@ export default function GroupChatScreen() {
       <View style={styles.groupInfo}>
         <View style={styles.groupHeader}>
           <ThemedText style={styles.groupName}>{item.name}</ThemedText>
-          <ThemedText style={styles.groupTime}>{item.time}</ThemedText>
         </View>
         <View style={styles.groupMeta}>
           <ThemedText style={styles.memberCount}>
-            {item.members} members
+            {item.group_for === "all" && "Mixed Group"}
+            {item.group_for === "mentor" && "Mentor Group"}
+            {item.group_for === "student" && "Student Group"}
           </ThemedText>
-        </View>
-        <View style={styles.groupFooter}>
-          <ThemedText style={styles.lastMessage} numberOfLines={1}>
-            {item.lastMessage}
-          </ThemedText>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <ThemedText style={styles.unreadText}>{item.unread}</ThemedText>
-            </View>
-          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -94,13 +201,27 @@ export default function GroupChatScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <FlatList
-        data={groupChatList}
-        renderItem={renderGroupItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.header}>
+          <ThemedText style={styles.message}>Loading groups...</ThemedText>
+        </View>
+      ) : (
+        <>
+          {groups && groups.length > 0 ? (
+            <FlatList
+              data={groups}
+              renderItem={renderGroupItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.header}>
+              <ThemedText style={styles.message}>No groups found.</ThemedText>
+            </View>
+          )}
+        </>
+      )}
     </ThemedView>
   );
 }
@@ -113,6 +234,10 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     marginBottom: 20,
+  },
+  message: {
+    fontSize: 16,
+    textAlign: "center",
   },
   title: {
     fontSize: 32,
@@ -160,7 +285,7 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     fontSize: 12,
-    opacity: 0.5,
+    opacity: 0.8,
   },
   groupFooter: {
     flexDirection: "row",

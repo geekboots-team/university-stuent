@@ -1,241 +1,184 @@
-import { ChatWindow, Message } from "@/components/chat-window";
+import GroupChatWindow from "@/components/group-chat-window";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
+import { useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme.web";
+import { supabase } from "@/lib/supabase";
+import { GroupMessage, Groups } from "@/models/group.model";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-
-// Mock messages data for group chats - replace with actual API calls
-const getMockGroupMessages = (groupId: string): Message[] => {
-  const mockConversations: Record<string, Message[]> = {
-    "1": [
-      {
-        id: "1",
-        text: "Hey everyone! Ready for the study session?",
-        senderId: "user-1",
-        senderName: "Alice",
-        timestamp: new Date(Date.now() - 3600000 * 3),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "Yes! I've prepared some notes on Chapter 5.",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 3600000 * 2.5),
-        isOwnMessage: true,
-      },
-      {
-        id: "3",
-        text: "That's great! Can you share them with the group?",
-        senderId: "user-2",
-        senderName: "Bob",
-        timestamp: new Date(Date.now() - 3600000 * 2),
-        isOwnMessage: false,
-      },
-      {
-        id: "4",
-        text: "I'll be joining in 10 minutes",
-        senderId: "user-3",
-        senderName: "Charlie",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-      {
-        id: "5",
-        text: "Anyone up for study session?",
-        senderId: "user-1",
-        senderName: "Alice",
-        timestamp: new Date(Date.now() - 1800000),
-        isOwnMessage: false,
-      },
-    ],
-    "2": [
-      {
-        id: "1",
-        text: "Team, we need to finalize the project proposal",
-        senderId: "user-4",
-        senderName: "Emma",
-        timestamp: new Date(Date.now() - 7200000),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "I've updated the slides. Please review them.",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 5400000),
-        isOwnMessage: true,
-      },
-      {
-        id: "3",
-        text: "Looks good! Just a few minor changes needed.",
-        senderId: "user-2",
-        senderName: "Bob",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-      {
-        id: "4",
-        text: "Meeting at 5 PM",
-        senderId: "user-2",
-        senderName: "Bob",
-        timestamp: new Date(Date.now() - 1800000),
-        isOwnMessage: false,
-      },
-    ],
-    "3": [
-      {
-        id: "1",
-        text: "🎉 There's a cultural fest this weekend!",
-        senderId: "user-admin",
-        senderName: "Admin",
-        timestamp: new Date(Date.now() - 86400000),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "Exciting! What events are planned?",
-        senderId: "user-5",
-        senderName: "David",
-        timestamp: new Date(Date.now() - 82800000),
-        isOwnMessage: false,
-      },
-      {
-        id: "3",
-        text: "Music performances, food stalls, and games!",
-        senderId: "user-admin",
-        senderName: "Admin",
-        timestamp: new Date(Date.now() - 79200000),
-        isOwnMessage: false,
-      },
-      {
-        id: "4",
-        text: "New event this weekend!",
-        senderId: "user-admin",
-        senderName: "Admin",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-    ],
-    "4": [
-      {
-        id: "1",
-        text: "Can someone explain integration by parts?",
-        senderId: "user-6",
-        senderName: "Frank",
-        timestamp: new Date(Date.now() - 86400000 * 2),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "Sure! It's basically the reverse of the product rule.",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 86400000 * 1.5),
-        isOwnMessage: true,
-      },
-      {
-        id: "3",
-        text: "Thanks! That makes more sense now.",
-        senderId: "user-6",
-        senderName: "Frank",
-        timestamp: new Date(Date.now() - 86400000),
-        isOwnMessage: false,
-      },
-      {
-        id: "4",
-        text: "Can someone explain the homework?",
-        senderId: "user-3",
-        senderName: "Charlie",
-        timestamp: new Date(Date.now() - 43200000),
-        isOwnMessage: false,
-      },
-    ],
-    "5": [
-      {
-        id: "1",
-        text: "Graduation trip ideas? 🎓",
-        senderId: "user-7",
-        senderName: "Grace",
-        timestamp: new Date(Date.now() - 172800000),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "Beach vacation sounds fun!",
-        senderId: "user-8",
-        senderName: "Henry",
-        timestamp: new Date(Date.now() - 86400000 * 1.5),
-        isOwnMessage: false,
-      },
-      {
-        id: "3",
-        text: "Or maybe a camping trip?",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 86400000),
-        isOwnMessage: true,
-      },
-      {
-        id: "4",
-        text: "Let's plan the trip!",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 43200000),
-        isOwnMessage: true,
-      },
-    ],
-  };
-
-  return mockConversations[groupId] || [];
-};
-
-// Mock group data
-const getGroupData = (groupId: string) => {
-  const groups: Record<string, { name: string; members: number }> = {
-    "1": { name: "CS Study Group", members: 12 },
-    "2": { name: "Project Team Alpha", members: 5 },
-    "3": { name: "Campus Events", members: 150 },
-    "4": { name: "Math 101 Help", members: 28 },
-    "5": { name: "Senior Year Squad", members: 8 },
-  };
-
-  return groups[groupId] || { name: "Unknown Group", members: 0 };
-};
+import React, { useCallback, useEffect, useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function GroupIndividualChatScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ groupId: string; groupName: string }>();
+  const params = useLocalSearchParams<{
+    groupId: string;
+    groupName: string;
+    senderType: string;
+  }>();
   const groupId = params.groupId || "1";
-  const groupData = getGroupData(groupId);
+  const senderType = params.senderType || "student";
   const colorScheme = useColorScheme();
-
-  const [messages, setMessages] = useState<Message[]>(() =>
-    getMockGroupMessages(groupId)
-  );
+  const { loading, setLoading, studentId } = useAppContext();
+  const [group, setGroup] = useState<Groups>();
+  const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const [participantCount, setParticipantCount] = useState<number>(0);
 
   const handleBack = useCallback(() => {
     router.push("/(dash)/group-chat");
   }, [router]);
 
-  const handleSendMessage = useCallback((text: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      senderId: "current-user",
-      timestamp: new Date(),
-      isOwnMessage: true,
+  const fetchGroup = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("groups")
+        .select("*, university(name), courses(name), clubs(name)")
+        .eq("id", groupId)
+        .single();
+
+      if (error || !data) {
+        Alert.alert("Error", "Failed to fetch group details");
+        handleBack();
+      }
+
+      setGroup(data);
+    } catch {
+      Alert.alert("Error", "Failed to fetch groups");
+    }
+  }, [groupId, handleBack]);
+
+  useEffect(() => {
+    fetchGroup();
+  }, [fetchGroup]);
+
+  const fetchParticipantCount = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from("group_participants")
+        .select("*", { count: "exact", head: true })
+        .eq("group_id", groupId);
+
+      if (error) {
+        throw error;
+      }
+
+      setParticipantCount(count || 0);
+    } catch {
+      Alert.alert("Error", "Failed to fetch participant count");
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    if (group) {
+      fetchParticipantCount();
+    }
+  }, [group, fetchParticipantCount]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!group) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("group_messages")
+        .select("*, sender:students(first_name, last_name)")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true })
+        .range(0, 99);
+
+      if (error) {
+        throw error;
+      }
+
+      setMessages(data || []);
+    } catch {
+      Alert.alert("Error", "Failed to fetch messages");
+    } finally {
+      setLoading(false);
+    }
+  }, [group, groupId, setLoading]);
+  useEffect(() => {
+    fetchMessages();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`group_messages-${groupId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "group_messages",
+          filter: `group_id=eq.${groupId}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newMsg = payload.new as GroupMessage;
+            if (newMsg.sender_type === "student" && newMsg.sender_id) {
+              supabase
+                .from("students")
+                .select("first_name, last_name")
+                .eq("id", newMsg.sender_id)
+                .single()
+                .then(({ data }) => {
+                  newMsg.sender = data;
+                  setMessages((prev) => [...prev, newMsg]);
+                });
+            } else {
+              setMessages((prev) => [...prev, newMsg]);
+            }
+          } else if (payload.eventType === "UPDATE") {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === payload.new.id ? (payload.new as GroupMessage) : msg
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            setMessages((prev) =>
+              prev.filter((msg) => msg.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
     };
+  }, [fetchMessages, groupId]);
 
-    setMessages((prev) => [...prev, newMessage]);
+  const handleSendMessage = useCallback(async (text: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("group_messages")
+        .insert({
+          group_id: groupId,
+          sender_id: senderType === "student" ? studentId : null,
+          sender_type: senderType,
+          club_id: senderType === "club" ? studentId : null,
+          admin_id: senderType === "admin" ? studentId : null,
+          moderator_id: senderType === "moderator" ? studentId : null,
+          message: text,
+        })
+        .select();
 
-    // TODO: Send message to backend API
-    console.log("Sending group message:", text);
+      if (error) {
+        Alert.alert("Error", "Error sending message");
+      }
+    } catch {
+      Alert.alert("Error", "Error sending message");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: params.groupName || groupData.name,
+          title: group?.name,
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -253,22 +196,22 @@ export default function GroupIndividualChatScreen() {
                 lightColor={Colors.light.tint}
                 darkColor={Colors.dark.tint}
               >
-                {params.groupName || groupData.name}
+                {group?.name || params.groupName}
               </ThemedText>
               <ThemedText
                 style={styles.headerSubtitle}
                 lightColor={Colors.light.tint}
                 darkColor={Colors.dark.tint}
               >
-                {groupData.members} members
+                {participantCount} members
               </ThemedText>
             </View>
           ),
         }}
       />
-      <ChatWindow
+      <GroupChatWindow
         messages={messages}
-        currentUserId="current-user"
+        currentUserId={studentId!}
         isGroupChat={true}
         onSendMessage={handleSendMessage}
         inputPlaceholder="Type a message..."
