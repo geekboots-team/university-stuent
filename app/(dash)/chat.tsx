@@ -1,8 +1,18 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
+import { useAppContext } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
+import { Conversation, ConversationUser } from "@/models/conversation.model";
 import { useRouter } from "expo-router";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // Mock data for chat list
 const chatList = [
@@ -44,7 +54,36 @@ const chatList = [
 ];
 
 export default function ChatScreen() {
+  const { studentTkn, studentId, loading, setLoading } = useAppContext();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const router = useRouter();
+
+  const fetchConversations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("conversations")
+        .select(
+          `
+          *,
+          participant1:students!participant1_id(id, first_name, last_name),
+          participant2:students!participant2_id(id, first_name, last_name)
+        `
+        )
+        .or(`participant1_id.eq.${studentId},participant2_id.eq.${studentId}`);
+
+      if (error) throw error;
+      setConversations(data);
+    } catch {
+      Alert.alert("Error", "Error fetching conversations!");
+    } finally {
+      setLoading(false);
+    }
+  }, [studentId, setLoading]);
+
+  useEffect(() => {
+    if (studentTkn) fetchConversations();
+  }, [studentTkn, fetchConversations]);
 
   const handleChatPress = (chatId: string, userName: string) => {
     router.push({
@@ -53,43 +92,68 @@ export default function ChatScreen() {
     });
   };
 
-  const renderChatItem = ({ item }: { item: (typeof chatList)[0] }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => handleChatPress(item.id, item.name)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.avatar}>
-        <ThemedText style={styles.avatarText}>{item.name.charAt(0)}</ThemedText>
-      </View>
-      <View style={styles.chatInfo}>
-        <View style={styles.chatHeader}>
-          <ThemedText style={styles.chatName}>{item.name}</ThemedText>
-          <ThemedText style={styles.chatTime}>{item.time}</ThemedText>
-        </View>
-        <View style={styles.chatFooter}>
-          <ThemedText style={styles.lastMessage} numberOfLines={1}>
-            {item.lastMessage}
+  const renderChatItem = ({ item }: { item: Conversation }) => {
+    const otherPersonName: ConversationUser =
+      studentId === item.participant1_id
+        ? item.participant2
+        : item.participant1;
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() =>
+          handleChatPress(
+            item.id,
+            `${otherPersonName.first_name} ${otherPersonName.last_name}`
+          )
+        }
+        activeOpacity={0.7}
+      >
+        <View style={styles.avatar}>
+          <ThemedText style={styles.avatarText}>
+            {otherPersonName.first_name.charAt(0)}
           </ThemedText>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <ThemedText style={styles.unreadText}>{item.unread}</ThemedText>
-            </View>
-          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeader}>
+            <ThemedText
+              style={styles.chatName}
+            >{`${otherPersonName.first_name} ${otherPersonName.last_name}`}</ThemedText>
+            <ThemedText style={styles.chatTime}>
+              {item.last_message_at}
+            </ThemedText>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
-      <FlatList
-        data={chatList}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.header}>
+          <ThemedText style={styles.message}>
+            Loading conversations...
+          </ThemedText>
+        </View>
+      ) : (
+        <>
+          {conversations && conversations.length > 0 ? (
+            <FlatList
+              data={conversations}
+              renderItem={renderChatItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.header}>
+              <ThemedText style={styles.message}>
+                No conversations found.
+              </ThemedText>
+            </View>
+          )}
+        </>
+      )}
     </ThemedView>
   );
 }
@@ -102,6 +166,10 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     marginBottom: 20,
+  },
+  message: {
+    fontSize: 16,
+    textAlign: "center",
   },
   title: {
     fontSize: 32,

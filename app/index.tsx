@@ -61,7 +61,7 @@ export default function LoginScreen() {
           data?.session?.access_token || "",
           data?.session?.refresh_token || "",
           data?.user?.id,
-          userData.usrName,
+          userData.first_name,
           userData.role,
           userData.status,
           userData.language

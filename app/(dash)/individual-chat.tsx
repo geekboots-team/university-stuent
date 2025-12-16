@@ -1,140 +1,99 @@
-import { ChatWindow, Message } from "@/components/chat-window";
+import { ChatWindow } from "@/components/chat-window";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme.web";
+import { supabase } from "@/lib/supabase";
+import { Messages } from "@/models/conversation.model";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
-
-// Mock messages data - replace with actual API calls
-const getMockMessages = (chatId: string): Message[] => {
-  const mockConversations: Record<string, Message[]> = {
-    "1": [
-      {
-        id: "1",
-        text: "Hey! How are you doing?",
-        senderId: "user-1",
-        senderName: "John Doe",
-        timestamp: new Date(Date.now() - 3600000 * 2),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "I'm doing great, thanks for asking! How about you?",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 3600000 * 1.5),
-        isOwnMessage: true,
-      },
-      {
-        id: "3",
-        text: "Pretty good! Just working on the project.",
-        senderId: "user-1",
-        senderName: "John Doe",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-      {
-        id: "4",
-        text: "Hey, how are you?",
-        senderId: "user-1",
-        senderName: "John Doe",
-        timestamp: new Date(Date.now() - 1800000),
-        isOwnMessage: false,
-      },
-    ],
-    "2": [
-      {
-        id: "1",
-        text: "Are we still meeting tomorrow?",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 7200000),
-        isOwnMessage: true,
-      },
-      {
-        id: "2",
-        text: "Yes! See you tomorrow at 10 AM",
-        senderId: "user-2",
-        senderName: "Jane Smith",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-      {
-        id: "3",
-        text: "See you tomorrow!",
-        senderId: "user-2",
-        senderName: "Jane Smith",
-        timestamp: new Date(Date.now() - 1800000),
-        isOwnMessage: false,
-      },
-    ],
-    "3": [
-      {
-        id: "1",
-        text: "Could you help me with the assignment?",
-        senderId: "user-3",
-        senderName: "Mike Johnson",
-        timestamp: new Date(Date.now() - 86400000),
-        isOwnMessage: false,
-      },
-      {
-        id: "2",
-        text: "Sure! What do you need help with?",
-        senderId: "current-user",
-        timestamp: new Date(Date.now() - 82800000),
-        isOwnMessage: true,
-      },
-      {
-        id: "3",
-        text: "Thanks for your help!",
-        senderId: "user-3",
-        senderName: "Mike Johnson",
-        timestamp: new Date(Date.now() - 3600000),
-        isOwnMessage: false,
-      },
-    ],
-  };
-
-  return mockConversations[chatId] || [];
-};
-
-// Mock user data
-const getUserData = (chatId: string) => {
-  const users: Record<string, { name: string; status: string }> = {
-    "1": { name: "John Doe", status: "Online" },
-    "2": { name: "Jane Smith", status: "Last seen 5 min ago" },
-    "3": { name: "Mike Johnson", status: "Online" },
-    "4": { name: "Sarah Wilson", status: "Last seen 2 hours ago" },
-    "5": { name: "David Brown", status: "Last seen yesterday" },
-  };
-
-  return users[chatId] || { name: "Unknown User", status: "" };
-};
+import React, { useCallback, useEffect, useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function IndividualChatScreen() {
+  const { studentTkn, setLoading, studentId } = useAppContext();
   const router = useRouter();
   const params = useLocalSearchParams<{ chatId: string; userName: string }>();
-  const chatId = params.chatId || "1";
-  const userData = getUserData(chatId);
+  const chatId = params.chatId;
+  const userName = params.userName;
   const colorScheme = useColorScheme();
+  const [msgList, setMsgList] = useState<Messages[]>([]);
 
-  const [messages, setMessages] = useState<Message[]>(() =>
-    getMockMessages(chatId)
-  );
+  const fetchMessages = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*, sender:students!sender_id(id, first_name, last_name)")
+        .eq("conversation_id", chatId);
+
+      if (error) {
+        Alert.alert("Error", "Error fetching messages!");
+      } else {
+        setMsgList(data);
+      }
+    } catch {
+      Alert.alert("Error", "Error fetching messages!");
+    } finally {
+      setLoading(false);
+    }
+  }, [chatId, setLoading]);
+
+  useEffect(() => {
+    if (studentTkn) {
+      fetchMessages();
+
+      // Subscribe to realtime changes
+      const channel = supabase
+        .channel(`messages-${chatId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${chatId}`,
+          },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              setMsgList((prev) => [...prev, payload.new as Messages]);
+            } else if (payload.eventType === "UPDATE") {
+              setMsgList((prev) =>
+                prev.map((msg) =>
+                  msg.id === payload.new.id ? (payload.new as Messages) : msg
+                )
+              );
+            } else if (payload.eventType === "DELETE") {
+              setMsgList((prev) =>
+                prev.filter((msg) => msg.id !== payload.old.id)
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
+    }
+  }, [studentTkn, chatId, fetchMessages]);
 
   const handleBack = useCallback(() => {
     router.push("/(dash)/chat");
   }, [router]);
 
   const handleSendMessage = useCallback((text: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      senderId: "current-user",
-      timestamp: new Date(),
-      isOwnMessage: true,
-    };
+    // const newMessage: Messages = {
+    //   id: Date.now().toString(),
+    //   message: text,
+    //   sender: {
+    //     id: "current-user",
+    //     first_name: "Current",
+    //     last_name: "User",
+    //   },
+    //   created_at: new Date().toISOString(),
+    // };
 
-    setMessages((prev) => [...prev, newMessage]);
+    // setMessages((prev) => [...prev, newMessage]);
 
     // TODO: Send message to backend API
     console.log("Sending message:", text);
@@ -144,7 +103,7 @@ export default function IndividualChatScreen() {
     <>
       <Stack.Screen
         options={{
-          title: params.userName || userData.name,
+          title: userName,
           headerTitleStyle: {
             fontSize: 18,
             fontWeight: "600",
@@ -163,7 +122,7 @@ export default function IndividualChatScreen() {
         }}
       />
       <ChatWindow
-        messages={messages}
+        messages={msgList}
         currentUserId="current-user"
         isGroupChat={false}
         onSendMessage={handleSendMessage}

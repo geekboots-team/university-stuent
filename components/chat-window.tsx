@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
+import { Messages } from "@/models/conversation.model";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useRef, useState } from "react";
 import {
@@ -13,18 +14,9 @@ import {
   View,
 } from "react-native";
 
-export interface Message {
-  id: string;
-  text: string;
-  senderId: string;
-  senderName?: string;
-  timestamp: Date | string;
-  isOwnMessage?: boolean;
-}
-
 export interface ChatWindowProps {
   /** Messages to display */
-  messages: Message[];
+  messages: Messages[];
   /** Current user's ID to determine message alignment */
   currentUserId: string;
   /** Whether this is a group chat (shows sender names on received messages) */
@@ -62,15 +54,21 @@ export function ChatWindow({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
-    const isOwn = item.isOwnMessage ?? item.senderId === currentUserId;
-    const showSenderName = isGroupChat && !isOwn && item.senderName;
+  const renderMessage = ({
+    item,
+    index,
+  }: {
+    item: Messages;
+    index: number;
+  }) => {
+    const isOwn = item.sender.id === currentUserId;
+    const showSenderName = isGroupChat && !isOwn && item.sender;
 
     // Check if we should show the sender name (first message or different sender)
     const previousMessage = index > 0 ? messages[index - 1] : null;
     const showName =
       showSenderName &&
-      (!previousMessage || previousMessage.senderId !== item.senderId);
+      (!previousMessage || previousMessage.sender.id !== item.sender.id);
 
     return (
       <View
@@ -80,7 +78,9 @@ export function ChatWindow({
         ]}
       >
         {showName && (
-          <ThemedText style={styles.senderName}>{item.senderName}</ThemedText>
+          <ThemedText style={styles.senderName}>
+            {item.sender.first_name} {item.sender.last_name}
+          </ThemedText>
         )}
         <View
           style={[
@@ -94,7 +94,7 @@ export function ChatWindow({
               isOwn ? styles.ownMessageText : styles.otherMessageText,
             ]}
           >
-            {item.text}
+            {item.message}
           </ThemedText>
           <ThemedText
             style={[
@@ -102,7 +102,7 @@ export function ChatWindow({
               isOwn ? styles.ownMessageTime : styles.otherMessageTime,
             ]}
           >
-            {formatTime(item.timestamp)}
+            {formatTime(item.created_at)}
           </ThemedText>
         </View>
       </View>
