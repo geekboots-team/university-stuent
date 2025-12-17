@@ -1,4 +1,11 @@
-import { StyleSheet, TextInput, type TextInputProps, View } from "react-native";
+import {
+  type StyleProp,
+  StyleSheet,
+  TextInput,
+  type TextInputProps,
+  type TextStyle,
+  View,
+} from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -7,6 +14,7 @@ export type ThemedInputProps = TextInputProps & {
   lightColor?: string;
   darkColor?: string;
   label?: string;
+  labelStyle?: StyleProp<TextStyle>;
   error?: string;
 };
 
@@ -15,6 +23,7 @@ export function ThemedInput({
   lightColor,
   darkColor,
   label,
+  labelStyle,
   error,
   placeholderTextColor,
   ...rest
@@ -32,14 +41,15 @@ export function ThemedInput({
 
   return (
     <View style={styles.container}>
-      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
+      {label && (
+        <ThemedText style={[styles.label, labelStyle]}>{label}</ThemedText>
+      )}
       <TextInput
         style={[
           styles.input,
           {
             backgroundColor,
             borderColor,
-            color: textColor,
             outline: "none",
           },
           style,
@@ -66,6 +76,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    fontWeight: "400",
+    color: "#212121",
   },
   error: {
     fontSize: 12,

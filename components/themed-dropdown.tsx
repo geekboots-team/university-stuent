@@ -1,5 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   FlatList,
@@ -66,12 +68,17 @@ export function ThemedDropdown({
         <ThemedText
           style={[
             styles.selectorText,
-            { color: selectedOption ? textColor : "#999" },
+            { color: selectedOption ? "#212121" : "#999" },
           ]}
         >
           {selectedOption ? selectedOption.label : placeholder}
         </ThemedText>
-        <ThemedText style={styles.arrow}>▼</ThemedText>
+        <Ionicons
+          name="chevron-down"
+          size={16}
+          color="#666"
+          style={styles.arrow}
+        />
       </TouchableOpacity>
       {error && <ThemedText style={styles.error}>{error}</ThemedText>}
 
@@ -88,11 +95,18 @@ export function ThemedDropdown({
           <View style={styles.modalContent}>
             <View style={[styles.dropdown, { backgroundColor }]}>
               <View style={styles.dropdownHeader}>
-                <ThemedText style={styles.dropdownTitle}>
+                <ThemedText
+                  style={[styles.dropdownTitle, { color: Colors.light.text }]}
+                >
                   {label || "Select an option"}
                 </ThemedText>
                 <TouchableOpacity onPress={() => setVisible(false)}>
-                  <ThemedText style={styles.closeButton}>✕</ThemedText>
+                  <Ionicons
+                    name="close"
+                    size={20}
+                    color="#666"
+                    style={styles.closeButton}
+                  />
                 </TouchableOpacity>
               </View>
               <FlatList
@@ -112,13 +126,19 @@ export function ThemedDropdown({
                     <ThemedText
                       style={[
                         styles.optionText,
+                        { color: Colors.dark.background },
                         item.value === value && styles.selectedOptionText,
                       ]}
                     >
                       {item.label}
                     </ThemedText>
                     {item.value === value && (
-                      <ThemedText style={styles.checkmark}>✓</ThemedText>
+                      <Ionicons
+                        name="checkmark"
+                        size={18}
+                        color="#842d1c"
+                        style={styles.checkmark}
+                      />
                     )}
                   </TouchableOpacity>
                 )}
@@ -155,8 +175,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   arrow: {
-    fontSize: 12,
-    color: "#666",
     marginLeft: 8,
   },
   error: {
@@ -198,8 +216,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   closeButton: {
-    fontSize: 18,
-    color: "#666",
     padding: 4,
   },
   optionsList: {
@@ -224,9 +240,5 @@ const styles = StyleSheet.create({
     color: "#842d1c",
     fontWeight: "600",
   },
-  checkmark: {
-    fontSize: 16,
-    color: "#842d1c",
-    fontWeight: "bold",
-  },
+  checkmark: {},
 });

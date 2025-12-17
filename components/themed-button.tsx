@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   type PressableProps,
@@ -15,6 +16,7 @@ export type ThemedButtonProps = Omit<PressableProps, "style"> & {
   variant?: "primary" | "secondary" | "outline";
   size?: "small" | "medium" | "large";
   style?: StyleProp<ViewStyle>;
+  loading?: boolean;
 };
 
 export function ThemedButton({
@@ -23,6 +25,7 @@ export function ThemedButton({
   size = "medium",
   style,
   disabled,
+  loading = false,
   ...rest
 }: ThemedButtonProps) {
   const tintColor = useThemeColor(
@@ -55,24 +58,32 @@ export function ThemedButton({
         size === "large" && styles.large,
         {
           backgroundColor: Colors.light.text,
-          opacity: pressed ? 0.8 : 1,
+          opacity: pressed || loading ? 0.8 : 1,
         },
         variant === "outline" && styles.outline,
         style,
       ]}
-      disabled={disabled}
+      disabled={disabled || loading}
       {...rest}
     >
-      <ThemedText
-        style={[
-          styles.text,
-          size === "small" && styles.smallText,
-          size === "large" && styles.largeText,
-          { color: getTextColor() },
-        ]}
-      >
-        {title}
-      </ThemedText>
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={getTextColor()}
+          style={styles.loader}
+        />
+      ) : (
+        <ThemedText
+          style={[
+            styles.text,
+            size === "small" && styles.smallText,
+            size === "large" && styles.largeText,
+            { color: getTextColor() },
+          ]}
+        >
+          {title}
+        </ThemedText>
+      )}
     </Pressable>
   );
 }
@@ -97,6 +108,9 @@ const styles = StyleSheet.create({
   },
   outline: {
     borderWidth: 2,
+  },
+  loader: {
+    marginVertical: 2,
   },
   text: {
     fontWeight: "600",

@@ -3,6 +3,8 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
 import { Image } from "expo-image";
 import { useState } from "react";
 import {
@@ -10,6 +12,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  useColorScheme,
   View,
 } from "react-native";
 
@@ -17,6 +20,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const colorScheme = useColorScheme();
 
   const validateEmail = () => {
     if (!email.trim()) {
@@ -48,14 +52,30 @@ export default function ForgotPasswordScreen() {
       <ThemedView style={styles.container}>
         <View style={styles.successContainer}>
           <View style={styles.successIconContainer}>
-            <ThemedText style={styles.successIcon}>✉️</ThemedText>
+            <IconSymbol
+              name="mail"
+              color={Colors[colorScheme ?? "light"].tint}
+              style={styles.successIcon}
+            />
           </View>
-          <ThemedText style={styles.successTitle}>Check Your Email</ThemedText>
-          <ThemedText style={styles.successMessage}>
+          <ThemedText style={[styles.successTitle]}>
+            Check Your Email
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.successMessage,
+              { color: Colors[colorScheme ?? "light"].subText },
+            ]}
+          >
             We&apos;ve sent a password reset link to:
           </ThemedText>
-          <ThemedText style={styles.emailText}>{email}</ThemedText>
-          <ThemedText style={styles.instructionText}>
+          <ThemedText style={[styles.emailText]}>{email}</ThemedText>
+          <ThemedText
+            style={[
+              styles.instructionText,
+              { color: Colors[colorScheme ?? "light"].subText },
+            ]}
+          >
             Click the link in the email to reset your password. If you
             don&apos;t see the email, check your spam folder.
           </ThemedText>
@@ -64,14 +84,24 @@ export default function ForgotPasswordScreen() {
             title="Resend Email"
             onPress={handleResendEmail}
             style={styles.resendButton}
-            variant="outline"
           />
 
-          <View style={styles.backToLoginContainer}>
-            <ThemedLink href="/" style={styles.backToLoginText}>
-              ← Back to Sign In
-            </ThemedLink>
-          </View>
+          <ThemedLink href="/" style={styles.backToLoginContainer}>
+            <View style={styles.backToLoginContent}>
+              <IconSymbol
+                name="chevron.left"
+                color={Colors[colorScheme ?? "light"].tint}
+              />
+              <ThemedText
+                style={[
+                  styles.backToLoginText,
+                  { color: Colors[colorScheme ?? "light"].text },
+                ]}
+              >
+                Back to Login
+              </ThemedText>
+            </View>
+          </ThemedLink>
         </View>
       </ThemedView>
     );
@@ -97,7 +127,12 @@ export default function ForgotPasswordScreen() {
               />
             </View>
             <ThemedText style={styles.title}>Forgot Password?</ThemedText>
-            <ThemedText style={styles.subtitle}>
+            <ThemedText
+              style={[
+                styles.subtitle,
+                { color: Colors[colorScheme ?? "light"].subText },
+              ]}
+            >
               No worries! Enter your email address and we&apos;ll send you a
               link to reset your password.
             </ThemedText>
@@ -122,27 +157,24 @@ export default function ForgotPasswordScreen() {
             <ThemedButton
               title="Send Reset Link"
               onPress={handleResetPassword}
-              style={styles.resetButton}
             />
-
-            <View style={styles.loginContainer}>
-              <ThemedText style={styles.rememberText}>
-                Remember your password?{" "}
-              </ThemedText>
-              <ThemedLink href="/" style={styles.loginText}>
-                Sign In
-              </ThemedLink>
-            </View>
           </View>
 
           {/* Help Section */}
-          <View style={styles.helpSection}>
+          <View
+            style={[
+              styles.helpSection,
+              {
+                backgroundColor: Colors[colorScheme ?? "light"].helpBackground,
+              },
+            ]}
+          >
             <ThemedText style={styles.helpTitle}>Need Help?</ThemedText>
             <ThemedText style={styles.helpText}>
               If you&apos;re having trouble accessing your account, please
               contact our support team.
             </ThemedText>
-            <ThemedLink href="/modal" style={styles.contactLink}>
+            <ThemedLink href="/" style={styles.contactLink}>
               Contact Support
             </ThemedLink>
           </View>
@@ -174,11 +206,6 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginBottom: 24,
   },
-  backButtonText: {
-    color: "#842d1c",
-    fontSize: 16,
-    fontWeight: "500",
-  },
   logoContainer: {
     flex: 1,
     marginBottom: 16,
@@ -190,12 +217,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#842d1c",
     marginBottom: 18,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
     textAlign: "center",
     lineHeight: 24,
     paddingHorizontal: 20,
@@ -205,34 +230,16 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignSelf: "center",
   },
-  resetButton: {
-    marginTop: 8,
-    marginBottom: 24,
-    shadowColor: "#842d1c",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   loginContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  rememberText: {
-    color: "#666",
-    fontSize: 14,
-  },
-  loginText: {
-    color: "#842d1c",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
+
   helpSection: {
     marginTop: 40,
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f9f9f9",
     borderRadius: 12,
   },
   helpTitle: {
@@ -268,18 +275,15 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#842d1c",
     marginBottom: 16,
   },
   successMessage: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 8,
   },
   emailText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "800",
     marginBottom: 16,
   },
   instructionText: {
@@ -298,8 +302,12 @@ const styles = StyleSheet.create({
   backToLoginContainer: {
     marginTop: 16,
   },
+  backToLoginContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   backToLoginText: {
-    color: "#842d1c",
     fontSize: 16,
     fontWeight: "500",
   },

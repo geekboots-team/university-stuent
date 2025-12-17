@@ -3,13 +3,13 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -116,6 +116,7 @@ export default function LoginScreen() {
           <View style={styles.formSection}>
             <ThemedInput
               label="Email"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Enter your email"
               value={email}
               onChangeText={setEmail}
@@ -126,6 +127,7 @@ export default function LoginScreen() {
 
             <ThemedInput
               label="Password"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
@@ -147,14 +149,8 @@ export default function LoginScreen() {
               title={loading ? "Signing In..." : "Sign In"}
               onPress={handleSignIn}
               style={styles.signInButton}
-              disabled={loading}
+              loading={loading}
             />
-            {loading && (
-              <ActivityIndicator
-                style={styles.loadingIndicator}
-                color="#6200ee"
-              />
-            )}
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -187,6 +183,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f9d05b",
   },
   keyboardView: {
     flex: 1,

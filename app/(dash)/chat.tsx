@@ -14,44 +14,6 @@ import {
   View,
 } from "react-native";
 
-// Mock data for chat list
-const chatList = [
-  {
-    id: "1",
-    name: "John Doe",
-    lastMessage: "Hey, how are you?",
-    time: "2:30 PM",
-    unread: 2,
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    lastMessage: "See you tomorrow!",
-    time: "1:15 PM",
-    unread: 0,
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    lastMessage: "Thanks for your help!",
-    time: "12:00 PM",
-    unread: 1,
-  },
-  {
-    id: "4",
-    name: "Sarah Wilson",
-    lastMessage: "Can you share the notes?",
-    time: "Yesterday",
-    unread: 0,
-  },
-  {
-    id: "5",
-    name: "David Brown",
-    lastMessage: "Great work on the project!",
-    time: "Yesterday",
-    unread: 0,
-  },
-];
 
 export default function ChatScreen() {
   const { studentTkn, studentId, loading, setLoading } = useAppContext();

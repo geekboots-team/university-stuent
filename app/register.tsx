@@ -4,6 +4,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { University } from "@/models/university.model";
@@ -16,6 +17,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  useColorScheme,
   View,
 } from "react-native";
 
@@ -30,6 +32,7 @@ export default function RegisterScreen() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const colorScheme = useColorScheme();
 
   useEffect(() => {
     if (studentTkn) {
@@ -98,90 +101,99 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    if (validateForm()) {
-      // Handle registration logic here
-      const { data: existingStudent, error: checkError } = await supabase
-        .from("students")
-        .select("email")
-        .eq("email", email)
-        .single();
+    try {
+      setLoading(true);
+      if (validateForm()) {
+        // Handle registration logic here
+        const { data: existingStudent, error: checkError } = await supabase
+          .from("students")
+          .select("email")
+          .eq("email", email)
+          .single();
 
-      if (checkError && checkError.code !== "PGRST116") {
-        Alert.alert("Error", "Error checking existing student");
-        return;
-      }
+        if (checkError && checkError.code !== "PGRST116") {
+          Alert.alert("Error", "Error checking existing student");
+          return;
+        }
 
-      if (existingStudent) {
-        Alert.alert("Error", "Student with this email already exists");
-        return;
-      }
+        if (existingStudent) {
+          Alert.alert("Error", "Student with this email already exists");
+          return;
+        }
 
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            is_super_admin: false,
-          },
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}verify`,
-        },
-      });
+        // Create user in Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          {
+            email: email,
+            password: password,
+            options: {
+              data: {
+                first_name: firstName,
+                last_name: lastName,
+                is_super_admin: false,
+              },
+              emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}verify`,
+            },
+          }
+        );
 
-      if (authError) {
-        Alert.alert("Error", authError.message);
-        return;
-      }
+        if (authError) {
+          Alert.alert("Error", authError.message);
+          return;
+        }
 
-      if (!authData.user) {
-        Alert.alert("Error", "Failed to create user account");
-        return;
-      }
+        if (!authData.user) {
+          Alert.alert("Error", "Failed to create user account");
+          return;
+        }
 
-      // Insert student data into student table
-      // Get selected university details to extract language
-      const selectedUniversity = universities.find(
-        (uni) => uni.id === university
-      );
+        // Insert student data into student table
+        // Get selected university details to extract language
+        const selectedUniversity = universities.find(
+          (uni) => uni.id === university
+        );
 
-      const { error: studentError } = await supabase.from("students").insert({
-        id: authData.user.id, // Use Auth user ID as primary key
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        role: "student",
-        language: selectedUniversity?.language || null,
-        status: "pending",
-      });
-
-      if (studentError) {
-        Alert.alert("Error", "Failed to create student profile");
-        return;
-      }
-
-      const { error: uniError } = await supabase
-        .from("applied_universities")
-        .insert({
-          user_id: authData.user.id, // Use Auth user ID as primary key
-          university_id: university,
-          course_id: null,
+        const { error: studentError } = await supabase.from("students").insert({
+          id: authData.user.id, // Use Auth user ID as primary key
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          role: "student",
+          language: selectedUniversity?.language || null,
           status: "pending",
         });
 
-      if (uniError) {
-        Alert.alert("Error", "Failed to create university application");
-        return;
+        if (studentError) {
+          Alert.alert("Error", "Failed to create student profile");
+          return;
+        }
+
+        const { error: uniError } = await supabase
+          .from("applied_universities")
+          .insert({
+            user_id: authData.user.id, // Use Auth user ID as primary key
+            university_id: university,
+            course_id: null,
+            status: "pending",
+          });
+
+        if (uniError) {
+          Alert.alert("Error", "Failed to create university application");
+          return;
+        }
+
+        Alert.alert(
+          "Success",
+          "Account created successfully! Please check your email to verify your account."
+        );
+
+        // Redirect to login or verification page
+        router.push("/");
       }
-
-      Alert.alert(
-        "Success",
-        "Account created successfully! Please check your email to verify your account."
-      );
-
-      // Redirect to login or verification page
-      router.push("/");
+    } catch {
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -280,25 +292,55 @@ export default function RegisterScreen() {
               error={errors.confirmPassword}
             />
 
-            <ThemedText style={styles.passwordHint}>
+            <ThemedText
+              style={[
+                styles.passwordHint,
+                { color: Colors[colorScheme ?? "light"].subText },
+              ]}
+            >
               Password must be at least 8 characters
             </ThemedText>
 
             <ThemedButton
-              title="Create Account"
+              title={loading ? "Creating..." : "Create Account"}
               onPress={handleRegister}
-              style={styles.registerButton}
+              loading={loading}
             />
 
             <View style={styles.termsContainer}>
-              <ThemedText style={styles.termsText}>
+              <ThemedText
+                style={[
+                  styles.termsText,
+                  { color: Colors[colorScheme ?? "light"].subText },
+                ]}
+              >
                 By creating an account, you agree to our{" "}
               </ThemedText>
-              <ThemedLink href="/" style={styles.termsLink}>
+              <ThemedLink
+                href="/"
+                style={[
+                  styles.termsLink,
+                  { color: Colors[colorScheme ?? "light"].tint },
+                ]}
+              >
                 Terms of Service
               </ThemedLink>
-              <ThemedText style={styles.termsText}> and </ThemedText>
-              <ThemedLink href="/" style={styles.termsLink}>
+              <ThemedText
+                style={[
+                  styles.termsText,
+                  { color: Colors[colorScheme ?? "light"].subText },
+                ]}
+              >
+                {" "}
+                and{" "}
+              </ThemedText>
+              <ThemedLink
+                href="/"
+                style={[
+                  styles.termsLink,
+                  { color: Colors[colorScheme ?? "light"].tint },
+                ]}
+              >
                 Privacy Policy
               </ThemedLink>
             </View>
@@ -330,6 +372,10 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  loadingIndicator: {
+    marginTop: -16,
+    marginBottom: 16,
   },
   scrollContent: {
     flexGrow: 1,
@@ -368,12 +414,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#842d1c",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
   },
   formSection: {
     width: "100%",
@@ -389,17 +433,8 @@ const styles = StyleSheet.create({
   },
   passwordHint: {
     fontSize: 12,
-    color: "#666",
     marginBottom: 20,
     marginTop: -8,
-  },
-  registerButton: {
-    marginBottom: 16,
-    shadowColor: "#842d1c",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   termsContainer: {
     flexDirection: "row",
