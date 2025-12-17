@@ -49,32 +49,32 @@ export default function ForgotPasswordScreen() {
 
   if (isSubmitted) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView
+        style={[styles.container, { backgroundColor: Colors.dark.tint }]}
+      >
         <View style={styles.successContainer}>
           <View style={styles.successIconContainer}>
             <IconSymbol
               name="mail"
-              color={Colors[colorScheme ?? "light"].tint}
+              color={Colors.light.tint}
               style={styles.successIcon}
             />
           </View>
-          <ThemedText style={[styles.successTitle]}>
+          <ThemedText
+            style={[styles.successTitle, { color: Colors.light.text }]}
+          >
             Check Your Email
           </ThemedText>
           <ThemedText
-            style={[
-              styles.successMessage,
-              { color: Colors[colorScheme ?? "light"].subText },
-            ]}
+            style={[styles.successMessage, { color: Colors.light.subText }]}
           >
             We&apos;ve sent a password reset link to:
           </ThemedText>
-          <ThemedText style={[styles.emailText]}>{email}</ThemedText>
+          <ThemedText style={[styles.emailText, { color: Colors.light.text }]}>
+            {email}
+          </ThemedText>
           <ThemedText
-            style={[
-              styles.instructionText,
-              { color: Colors[colorScheme ?? "light"].subText },
-            ]}
+            style={[styles.instructionText, { color: Colors.light.subText }]}
           >
             Click the link in the email to reset your password. If you
             don&apos;t see the email, check your spam folder.
@@ -88,15 +88,9 @@ export default function ForgotPasswordScreen() {
 
           <ThemedLink href="/" style={styles.backToLoginContainer}>
             <View style={styles.backToLoginContent}>
-              <IconSymbol
-                name="chevron.left"
-                color={Colors[colorScheme ?? "light"].tint}
-              />
+              <IconSymbol name="chevron.left" color={Colors.light.tint} />
               <ThemedText
-                style={[
-                  styles.backToLoginText,
-                  { color: Colors[colorScheme ?? "light"].text },
-                ]}
+                style={[styles.backToLoginText, { color: Colors.light.text }]}
               >
                 Back to Login
               </ThemedText>
@@ -108,7 +102,9 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={[styles.container, { backgroundColor: Colors.dark.tint }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -126,12 +122,11 @@ export default function ForgotPasswordScreen() {
                 resizeMode="contain"
               />
             </View>
-            <ThemedText style={styles.title}>Forgot Password?</ThemedText>
+            <ThemedText style={[styles.title, { color: Colors.light.text }]}>
+              Forgot Password?
+            </ThemedText>
             <ThemedText
-              style={[
-                styles.subtitle,
-                { color: Colors[colorScheme ?? "light"].subText },
-              ]}
+              style={[styles.subtitle, { color: Colors.light.subText }]}
             >
               No worries! Enter your email address and we&apos;ll send you a
               link to reset your password.
@@ -142,6 +137,7 @@ export default function ForgotPasswordScreen() {
           <View style={styles.formSection}>
             <ThemedInput
               label="Email Address"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Enter your email"
               value={email}
               onChangeText={(text) => {
@@ -165,7 +161,7 @@ export default function ForgotPasswordScreen() {
             style={[
               styles.helpSection,
               {
-                backgroundColor: Colors[colorScheme ?? "light"].helpBackground,
+                backgroundColor: Colors.light.helpBackground,
               },
             ]}
           >

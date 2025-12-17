@@ -198,7 +198,9 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={[styles.container, { backgroundColor: Colors.dark.tint }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -216,8 +218,12 @@ export default function RegisterScreen() {
                 resizeMode="contain"
               />
             </View>
-            <ThemedText style={styles.title}>Create Account</ThemedText>
-            <ThemedText style={styles.subtitle}>
+            <ThemedText style={[styles.title, { color: Colors.light.text }]}>
+              Create Account
+            </ThemedText>
+            <ThemedText
+              style={[styles.subtitle, { color: Colors.light.subText }]}
+            >
               Join UniversitySeniors.com today
             </ThemedText>
           </View>
@@ -228,6 +234,7 @@ export default function RegisterScreen() {
               <View style={styles.nameInput}>
                 <ThemedInput
                   label="First Name"
+                  labelStyle={{ color: Colors.light.text }}
                   placeholder="First name"
                   value={firstName}
                   onChangeText={setFirstName}
@@ -239,6 +246,7 @@ export default function RegisterScreen() {
               <View style={styles.nameInput}>
                 <ThemedInput
                   label="Last Name"
+                  labelStyle={{ color: Colors.light.text }}
                   placeholder="Last name"
                   value={lastName}
                   onChangeText={setLastName}
@@ -251,6 +259,7 @@ export default function RegisterScreen() {
 
             <ThemedInput
               label="Email"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Enter your email"
               value={email}
               onChangeText={setEmail}
@@ -262,6 +271,7 @@ export default function RegisterScreen() {
 
             <ThemedDropdown
               label="University"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Select your university"
               options={universities.map((uni) => ({
                 label: uni.name,
@@ -274,6 +284,7 @@ export default function RegisterScreen() {
 
             <ThemedInput
               label="Password"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Create a password"
               value={password}
               onChangeText={setPassword}
@@ -284,6 +295,7 @@ export default function RegisterScreen() {
 
             <ThemedInput
               label="Confirm Password"
+              labelStyle={{ color: Colors.light.text }}
               placeholder="Confirm your password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -293,10 +305,7 @@ export default function RegisterScreen() {
             />
 
             <ThemedText
-              style={[
-                styles.passwordHint,
-                { color: Colors[colorScheme ?? "light"].subText },
-              ]}
+              style={[styles.passwordHint, { color: Colors.light.subText }]}
             >
               Password must be at least 8 characters
             </ThemedText>
@@ -309,37 +318,25 @@ export default function RegisterScreen() {
 
             <View style={styles.termsContainer}>
               <ThemedText
-                style={[
-                  styles.termsText,
-                  { color: Colors[colorScheme ?? "light"].subText },
-                ]}
+                style={[styles.termsText, { color: Colors.light.subText }]}
               >
                 By creating an account, you agree to our{" "}
               </ThemedText>
               <ThemedLink
                 href="/"
-                style={[
-                  styles.termsLink,
-                  { color: Colors[colorScheme ?? "light"].tint },
-                ]}
+                style={[styles.termsLink, { color: Colors.light.tint }]}
               >
                 Terms of Service
               </ThemedLink>
               <ThemedText
-                style={[
-                  styles.termsText,
-                  { color: Colors[colorScheme ?? "light"].subText },
-                ]}
+                style={[styles.termsText, { color: Colors.light.subText }]}
               >
                 {" "}
                 and{" "}
               </ThemedText>
               <ThemedLink
                 href="/"
-                style={[
-                  styles.termsLink,
-                  { color: Colors[colorScheme ?? "light"].tint },
-                ]}
+                style={[styles.termsLink, { color: Colors.light.tint }]}
               >
                 Privacy Policy
               </ThemedLink>

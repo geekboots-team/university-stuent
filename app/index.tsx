@@ -84,7 +84,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={[styles.container, { backgroundColor: Colors.dark.tint }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -183,7 +185,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9d05b",
   },
   keyboardView: {
     flex: 1,

@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   otherMessageText: {
-    color: Colors.dark.background,
+    color: Colors.light.helpBackground,
   },
   messageTime: {
     fontSize: 11,

@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
+    borderBottomColor: "rgba(0,0,0,0.2)",
   },
   avatar: {
     width: 50,

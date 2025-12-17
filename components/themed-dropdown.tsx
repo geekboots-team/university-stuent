@@ -7,7 +7,9 @@ import {
   FlatList,
   Modal,
   Pressable,
+  StyleProp,
   StyleSheet,
+  TextStyle,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -24,6 +26,7 @@ export type ThemedDropdownProps = {
   value: string;
   onSelect: (value: string) => void;
   error?: string;
+  labelStyle?: StyleProp<TextStyle>;
   lightColor?: string;
   darkColor?: string;
 };
@@ -35,14 +38,12 @@ export function ThemedDropdown({
   value,
   onSelect,
   error,
+  labelStyle,
   lightColor,
   darkColor,
 }: ThemedDropdownProps) {
   const [visible, setVisible] = useState(false);
-  const textColor = useThemeColor(
-    { light: lightColor, dark: darkColor },
-    "text"
-  );
+
   const backgroundColor = useThemeColor(
     { light: "#f5f5f5", dark: "#fff" },
     "background"
@@ -53,7 +54,9 @@ export function ThemedDropdown({
 
   return (
     <View style={styles.container}>
-      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
+      {label && (
+        <ThemedText style={[styles.label, labelStyle]}>{label}</ThemedText>
+      )}
       <TouchableOpacity
         style={[
           styles.selector,
