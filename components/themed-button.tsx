@@ -32,10 +32,6 @@ export function ThemedButton({
     { light: Colors.light.tint, dark: Colors.dark.tint },
     "tint"
   );
-  const textColor = useThemeColor(
-    { light: Colors.light.text, dark: Colors.dark.text },
-    "text"
-  );
   const getTextColor = () => {
     if (disabled) return "#888";
     switch (variant) {
@@ -43,9 +39,23 @@ export function ThemedButton({
         return "#fff";
       case "secondary":
       case "outline":
-        return textColor;
+        return tintColor;
       default:
         return "#fff";
+    }
+  };
+
+  const getBackgroundColor = () => {
+    if (disabled) return "#ccc";
+    switch (variant) {
+      case "primary":
+        return Colors.light.text;
+      case "secondary":
+        return "#fff";
+      case "outline":
+        return "transparent";
+      default:
+        return Colors.light.text;
     }
   };
 
@@ -57,10 +67,13 @@ export function ThemedButton({
         size === "medium" && styles.medium,
         size === "large" && styles.large,
         {
-          backgroundColor: Colors.light.text,
+          backgroundColor: getBackgroundColor(),
           opacity: pressed || loading ? 0.8 : 1,
         },
-        variant === "outline" && styles.outline,
+        variant === "outline" && {
+          ...styles.outline,
+          borderColor: tintColor,
+        },
         style,
       ]}
       disabled={disabled || loading}

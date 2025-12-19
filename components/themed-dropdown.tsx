@@ -48,7 +48,7 @@ export function ThemedDropdown({
     { light: "#f5f5f5", dark: "#fff" },
     "background"
   );
-  const borderColor = error ? "#ff4444" : "#ccc";
+  const borderColor = error ? "#ff4444" : "transparent";
 
   const selectedOption = options.find((opt) => opt.value === value);
 

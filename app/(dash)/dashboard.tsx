@@ -3,10 +3,17 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+
   const handleChatPress = () => {
     router.push("/(dash)/chat");
   };
@@ -30,13 +37,15 @@ export default function DashboardScreen() {
           onPress={handleChatPress}
           activeOpacity={0.8}
         >
-          <View style={styles.iconContainer}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: Colors[colorScheme ?? "light"].text },
+            ]}
+          >
             <IconSymbol size={28} name="message.fill" color="#fff" />
           </View>
           <ThemedText style={styles.optionTitle}>Chat</ThemedText>
-          <ThemedText style={styles.optionDescription}>
-            Start a private conversation
-          </ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -44,13 +53,15 @@ export default function DashboardScreen() {
           onPress={handleGroupChatPress}
           activeOpacity={0.8}
         >
-          <View style={styles.iconContainer}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: Colors[colorScheme ?? "light"].text },
+            ]}
+          >
             <IconSymbol size={28} name="person.3.fill" color="#fff" />
           </View>
           <ThemedText style={styles.optionTitle}>Group Chat</ThemedText>
-          <ThemedText style={styles.optionDescription}>
-            Join or create group discussions
-          </ThemedText>
         </TouchableOpacity>
       </View>
     </ThemedView>
@@ -77,43 +88,27 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   optionsContainer: {
-    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
     gap: 24,
     paddingBottom: 100,
   },
   optionCard: {
-    backgroundColor: Colors.light.tint,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 100,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   iconContainer: {
     width: 50,
     height: 50,
     borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
   optionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
     marginBottom: 8,
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
   },
 });

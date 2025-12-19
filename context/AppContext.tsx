@@ -235,7 +235,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 session.access_token,
                 session.refresh_token,
                 userId ? userId : "",
-                session.user.user_metadata?.full_name,
+                session.user.user_metadata?.first_name +
+                  " " +
+                  session.user.user_metadata?.last_name,
                 userData.role,
                 userData.status,
                 userData.language

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
+import { ProfileModal } from "@/components/profile-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
@@ -19,7 +20,9 @@ function TabBarMenu({ color }: { color: string }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const { studentTkn, logoutStudent } = useAppContext();
+  const { studentTkn, logoutStudent, studentStatus, upStudentStatus } =
+    useAppContext();
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     if (!studentTkn) {
@@ -27,10 +30,25 @@ function TabBarMenu({ color }: { color: string }) {
     }
   }, [studentTkn, router]);
 
+  useEffect(() => {
+    if (studentStatus === "approved") {
+      setShowProfileModal(true);
+    }
+    if (studentStatus === "active") {
+      setShowProfileModal(false);
+    }
+  }, [studentStatus]);
+
   const handleLogout = () => {
     setMenuVisible(false);
     logoutStudent();
     router.replace("/");
+  };
+
+  const handleCloseProfileModal = () => {
+    upStudentStatus("active");
+    setShowProfileModal(false);
+    router.push("/(dash)/dashboard");
   };
 
   return (
@@ -38,6 +56,11 @@ function TabBarMenu({ color }: { color: string }) {
       <TouchableOpacity onPress={() => setMenuVisible(true)}>
         <IconSymbol size={28} name="ellipsis" color={color} />
       </TouchableOpacity>
+
+      <ProfileModal
+        visible={showProfileModal}
+        onClose={handleCloseProfileModal}
+      />
 
       <Modal
         transparent
@@ -66,6 +89,16 @@ function TabBarMenu({ color }: { color: string }) {
                 ]}
               >
                 Logout
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+              <Text
+                style={[
+                  styles.menuText,
+                  { color: Colors[colorScheme ?? "light"].text },
+                ]}
+              >
+                Profile
               </Text>
             </TouchableOpacity>
           </View>
