@@ -45,6 +45,11 @@ function TabBarMenu({ color }: { color: string }) {
     router.replace("/");
   };
 
+  const handleProfile = () => {
+    setMenuVisible(false);
+    router.push("/(dash)/profile");
+  };
+
   const handleCloseProfileModal = () => {
     upStudentStatus("active");
     setShowProfileModal(false);
@@ -91,14 +96,14 @@ function TabBarMenu({ color }: { color: string }) {
                 Logout
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
               <Text
                 style={[
                   styles.menuText,
                   { color: Colors[colorScheme ?? "light"].text },
                 ]}
               >
-                Profile
+                My Profile
               </Text>
             </TouchableOpacity>
           </View>
@@ -225,6 +230,20 @@ export default function TabLayout() {
         options={{
           href: null, // Hide from tab bar
           headerShown: true,
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          href: null, // Hide from tab bar
+          headerShown: true,
+          title: "My Profile",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: Colors[colorScheme ?? "light"].tint,
+          },
         }}
       />
     </Tabs>
