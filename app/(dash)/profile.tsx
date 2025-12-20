@@ -379,10 +379,12 @@ export default function ProfileScreen() {
     try {
       setUploadingImage(true);
 
+      //   const imageUrl = await uploadProfileImage(uri, studentId || "");
+
       // Get file extension
       const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
       const fileName = `${studentId}_${Date.now()}.${ext}`;
-      const filePath = `profile-pictures/${fileName}`;
+      const filePath = `avatars/${fileName}`;
 
       // Fetch the image and convert to blob
       const response = await fetch(uri);
