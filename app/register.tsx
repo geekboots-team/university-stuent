@@ -15,6 +15,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   useColorScheme,
@@ -352,9 +353,9 @@ export default function RegisterScreen() {
               <ThemedText style={styles.hasAccountText}>
                 Already have an account?{" "}
               </ThemedText>
-              <ThemedLink href="/" style={styles.loginText}>
-                Sign In
-              </ThemedLink>
+              <Pressable onPress={() => router.back()}>
+                <ThemedText style={styles.loginText}>Sign In</ThemedText>
+              </Pressable>
             </View>
           </View>
         </ScrollView>
@@ -412,6 +413,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 8,
+    paddingTop: 10,
   },
   subtitle: {
     fontSize: 16,

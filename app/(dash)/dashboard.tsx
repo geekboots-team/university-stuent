@@ -25,7 +25,6 @@ export default function DashboardScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Dashboard</ThemedText>
         <ThemedText style={styles.subtitle}>
           Welcome to UniversitySeniors
         </ThemedText>
@@ -71,17 +70,11 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
   },
   header: {
+    paddingTop: 20,
     marginBottom: 40,
     alignItems: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,

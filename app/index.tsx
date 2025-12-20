@@ -216,6 +216,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#842d1c",
     marginBottom: 8,
+    paddingTop: 10,
   },
   tagline: {
     fontSize: 18,
