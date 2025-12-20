@@ -9,10 +9,12 @@ import { supabase } from "@/lib/supabase";
 import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -33,6 +35,7 @@ export default function ProfileScreen() {
   const { studentId, upStudentStatus } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Profile fields based on Student model
   const [firstName, setFirstName] = useState("");
@@ -47,6 +50,8 @@ export default function ProfileScreen() {
   const [nativeCity, setNativeCity] = useState("");
   const [nativeState, setNativeState] = useState("");
   const [nativeCountry, setNativeCountry] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -153,6 +158,7 @@ export default function ProfileScreen() {
         setNativeCity(student.native_city || "");
         setNativeState(student.native_state || "");
         setNativeCountry(student.native_country || "");
+        setProfilePic(student.profile_pic || "");
       }
     } catch (error) {
       console.error("Error fetching student data:", error);
@@ -312,6 +318,7 @@ export default function ProfileScreen() {
           native_city: nativeCity.trim(),
           native_state: nativeState.trim(),
           native_country: nativeCountry.trim(),
+          profile_pic: profilePic,
           status: "active",
         })
         .eq("id", studentId);
@@ -325,12 +332,10 @@ export default function ProfileScreen() {
       // Update the student status in context
       upStudentStatus("active");
 
-      Alert.alert("Success", "Profile updated successfully!", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      // Switch back to view mode
+      setIsEditing(false);
+
+      Alert.alert("Success", "Profile updated successfully!");
     } catch {
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
     } finally {
@@ -338,8 +343,81 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleGoBack = () => {
-    router.back();
+  const handlePickImage = async () => {
+    try {
+      // Request permission
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photo library to upload a profile picture."
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        await uploadImage(imageUri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image. Please try again.");
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    try {
+      setUploadingImage(true);
+
+      // Get file extension
+      const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
+      const fileName = `${studentId}_${Date.now()}.${ext}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      // Fetch the image and convert to blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Convert blob to ArrayBuffer
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, arrayBuffer, {
+          contentType: `image/${ext}`,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        Alert.alert("Error", "Failed to upload image. Please try again.");
+        return;
+      }
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+      setProfilePic(publicUrl);
+      Alert.alert("Success", "Profile picture uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   return (
@@ -367,6 +445,82 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <>
+              {/* Profile Picture Section */}
+              <View style={styles.profilePicSection}>
+                <TouchableOpacity
+                  onPress={isEditing ? handlePickImage : undefined}
+                  disabled={uploadingImage || !isEditing}
+                  style={styles.profilePicContainer}
+                >
+                  {profilePic ? (
+                    <Image
+                      source={{ uri: profilePic }}
+                      style={styles.profilePic}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.profilePicPlaceholder,
+                        {
+                          backgroundColor:
+                            colorScheme === "dark" ? "#333" : "#e0e0e0",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="person"
+                        size={30}
+                        color={Colors[colorScheme ?? "light"].subText}
+                      />
+                    </View>
+                  )}
+                  {isEditing && (
+                    <View
+                      style={[
+                        styles.editPicOverlay,
+                        {
+                          backgroundColor:
+                            colorScheme === "dark"
+                              ? "rgba(0,0,0,0.6)"
+                              : "rgba(0,0,0,0.4)",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={uploadingImage ? "hourglass" : "camera"}
+                        size={18}
+                        color="#fff"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+                <View>
+                  <ThemedText style={styles.profileName}>
+                    {firstName} {lastName}
+                  </ThemedText>
+                  <ThemedText>{gender}</ThemedText>
+                </View>
+                <View style={styles.editButtonContainer}>
+                  {!isEditing ? (
+                    <ThemedButton
+                      title="Edit Profile"
+                      onPress={() => setIsEditing(true)}
+                      variant="outline"
+                      size="small"
+                    />
+                  ) : (
+                    <ThemedButton
+                      title="Cancel"
+                      onPress={() => setIsEditing(false)}
+                      variant="outline"
+                      size="small"
+                    />
+                  )}
+                </View>
+              </View>
+
+              {/* Edit Button */}
+
               {/* Basic Information Section */}
               <View
                 style={[
@@ -382,48 +536,54 @@ export default function ProfileScreen() {
                     { color: Colors[colorScheme ?? "light"].icon },
                   ]}
                 >
-                  Basic Information
+                  {isEditing ? "Basic Information" : "About"}
                 </ThemedText>
 
-                <View style={styles.row}>
-                  <View style={styles.halfWidth}>
-                    <ThemedInput
-                      label="First Name *"
-                      placeholder="Enter first name"
-                      value={firstName}
-                      onChangeText={setFirstName}
-                      error={errors.firstName}
-                    />
-                  </View>
-                  <View style={styles.halfWidth}>
-                    <ThemedInput
-                      label="Last Name *"
-                      placeholder="Enter last name"
-                      value={lastName}
-                      onChangeText={setLastName}
-                      error={errors.lastName}
-                    />
-                  </View>
-                </View>
+                {isEditing ? (
+                  <>
+                    <View style={styles.row}>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="First Name *"
+                          placeholder="Enter first name"
+                          value={firstName}
+                          onChangeText={setFirstName}
+                          error={errors.firstName}
+                        />
+                      </View>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="Last Name *"
+                          placeholder="Enter last name"
+                          value={lastName}
+                          onChangeText={setLastName}
+                          error={errors.lastName}
+                        />
+                      </View>
+                    </View>
 
-                <ThemedDropdown
-                  label="Gender *"
-                  placeholder="Select gender"
-                  options={genderOptions}
-                  value={gender}
-                  onSelect={setGender}
-                  error={errors.gender}
-                />
+                    <ThemedDropdown
+                      label="Gender *"
+                      placeholder="Select gender"
+                      options={genderOptions}
+                      value={gender}
+                      onSelect={setGender}
+                      error={errors.gender}
+                    />
 
-                <ThemedInput
-                  label="Bio"
-                  placeholder="Tell us about yourself..."
-                  value={bio}
-                  onChangeText={setBio}
-                  multiline
-                  numberOfLines={3}
-                  style={styles.bioInput}
-                />
+                    <ThemedInput
+                      label="Bio"
+                      placeholder="Tell us about yourself..."
+                      value={bio}
+                      onChangeText={setBio}
+                      multiline
+                      numberOfLines={3}
+                      style={styles.bioInput}
+                    />
+                  </>
+                ) : (
+                  <ThemedText>{bio || "-"}</ThemedText>
+                )}
               </View>
 
               {/* Current Location Section */}
@@ -444,38 +604,71 @@ export default function ProfileScreen() {
                   Current Location
                 </ThemedText>
 
-                <ThemedInput
-                  label="City"
-                  placeholder="Enter your city"
-                  value={city}
-                  onChangeText={setCity}
-                />
-
-                <View style={styles.row}>
-                  <View style={styles.halfWidth}>
+                {isEditing ? (
+                  <>
                     <ThemedInput
-                      label="State"
-                      placeholder="Enter state"
-                      value={state}
-                      onChangeText={setState}
+                      label="City"
+                      placeholder="Enter your city"
+                      value={city}
+                      onChangeText={setCity}
                     />
-                  </View>
-                  <View style={styles.halfWidth}>
-                    <ThemedInput
-                      label="Country"
-                      placeholder="Enter country"
-                      value={country}
-                      onChangeText={setCountry}
-                    />
-                  </View>
-                </View>
 
-                <ThemedInput
-                  label="College Name"
-                  placeholder="Enter your college name"
-                  value={collegeName}
-                  onChangeText={setCollegeName}
-                />
+                    <View style={styles.row}>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="State"
+                          placeholder="Enter state"
+                          value={state}
+                          onChangeText={setState}
+                        />
+                      </View>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="Country"
+                          placeholder="Enter country"
+                          value={country}
+                          onChangeText={setCountry}
+                        />
+                      </View>
+                    </View>
+
+                    <ThemedInput
+                      label="College Name"
+                      placeholder="Enter your college name"
+                      value={collegeName}
+                      onChangeText={setCollegeName}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>City</ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {city || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>State</ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {state || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>Country</ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {country || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>
+                        College Name
+                      </ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {collegeName || "-"}
+                      </ThemedText>
+                    </View>
+                  </>
+                )}
               </View>
 
               {/* Native Location Section */}
@@ -496,38 +689,77 @@ export default function ProfileScreen() {
                   Native Location
                 </ThemedText>
 
-                <ThemedInput
-                  label="Native Course"
-                  placeholder="Enter your native course"
-                  value={nativeCourse}
-                  onChangeText={setNativeCourse}
-                />
-
-                <ThemedInput
-                  label="Native City"
-                  placeholder="Enter your native city"
-                  value={nativeCity}
-                  onChangeText={setNativeCity}
-                />
-
-                <View style={styles.row}>
-                  <View style={styles.halfWidth}>
+                {isEditing ? (
+                  <>
                     <ThemedInput
-                      label="Native State"
-                      placeholder="Enter state"
-                      value={nativeState}
-                      onChangeText={setNativeState}
+                      label="Native Course"
+                      placeholder="Enter your native course"
+                      value={nativeCourse}
+                      onChangeText={setNativeCourse}
                     />
-                  </View>
-                  <View style={styles.halfWidth}>
+
                     <ThemedInput
-                      label="Native Country"
-                      placeholder="Enter country"
-                      value={nativeCountry}
-                      onChangeText={setNativeCountry}
+                      label="Native City"
+                      placeholder="Enter your native city"
+                      value={nativeCity}
+                      onChangeText={setNativeCity}
                     />
-                  </View>
-                </View>
+
+                    <View style={styles.row}>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="Native State"
+                          placeholder="Enter state"
+                          value={nativeState}
+                          onChangeText={setNativeState}
+                        />
+                      </View>
+                      <View style={styles.halfWidth}>
+                        <ThemedInput
+                          label="Native Country"
+                          placeholder="Enter country"
+                          value={nativeCountry}
+                          onChangeText={setNativeCountry}
+                        />
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>
+                        Native Course
+                      </ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {nativeCourse || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>
+                        Native City
+                      </ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {nativeCity || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>
+                        Native State
+                      </ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {nativeState || "-"}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.viewRow}>
+                      <ThemedText style={styles.viewLabel}>
+                        Native Country
+                      </ThemedText>
+                      <ThemedText style={styles.viewValue}>
+                        {nativeCountry || "-"}
+                      </ThemedText>
+                    </View>
+                  </>
+                )}
               </View>
 
               {/* Applied Universities Section */}
@@ -621,14 +853,20 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {/* Submit Button */}
-              <View style={styles.buttonContainer}>
-                <ThemedButton
-                  title={loading ? "Updating..." : "Update Profile"}
-                  onPress={handleUpdateProfile}
-                  loading={loading}
-                />
-              </View>
+              {/* Submit Button - Only show in edit mode */}
+              {isEditing && (
+                <View style={styles.buttonContainer}>
+                  <View style={styles.buttonRow}>
+                    <View style={styles.buttonWrapper}>
+                      <ThemedButton
+                        title={loading ? "Updating..." : "Update Profile"}
+                        onPress={handleUpdateProfile}
+                        loading={loading}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
             </>
           )}
         </ScrollView>
@@ -715,29 +953,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 0.5,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  headerTitleContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-  },
+
   keyboardView: {
     flex: 1,
   },
@@ -782,6 +998,82 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 32,
     marginBottom: 20,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  buttonWrapper: {
+    flex: 1,
+  },
+  profilePicSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  profilePicContainer: {
+    position: "relative",
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+    overflow: "hidden",
+  },
+  profilePic: {
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+  },
+  profilePicPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editPicOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+  },
+  editPicText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  editButtonContainer: {
+    alignItems: "flex-end",
+    marginLeft: "auto",
+  },
+  viewRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(128, 128, 128, 0.2)",
+  },
+  viewLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    opacity: 0.7,
+    flex: 1,
+  },
+  viewValue: {
+    fontSize: 14,
+    flex: 2,
+    textAlign: "right",
   },
   appliedList: {
     marginBottom: 16,
