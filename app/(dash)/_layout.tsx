@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   dropdown: {
-    marginBottom: 60,
+    marginBottom: 80,
     marginRight: 16,
     borderRadius: 8,
     borderWidth: 1,

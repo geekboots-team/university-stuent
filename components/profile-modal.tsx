@@ -409,9 +409,30 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
     try {
       setUploadingImage(true);
 
-      const publicUrl = await uploadProfileImageFromUri(uri, studentId || "");
+      const imageUrl = await uploadProfileImageFromUri(uri, studentId || "");
 
-      setProfilePic(publicUrl);
+      const { error: error1 } = await supabase.auth.updateUser({
+        data: {
+          avatar_url: `${imageUrl}`,
+        },
+      });
+
+      if (error1) {
+        Alert.alert("Error", "Failed to update avatar");
+        return;
+      }
+
+      const { error: error2 } = await supabase
+        .from("students")
+        .update({ profile_pic: imageUrl })
+        .eq("id", studentId);
+
+      if (error2) {
+        Alert.alert("Error", "Failed to update profile picture in database");
+        return;
+      }
+
+      setProfilePic(imageUrl);
       Alert.alert("Success", "Profile picture uploaded successfully!");
     } catch {
       Alert.alert("Error", "Failed to upload image. Please try again.");

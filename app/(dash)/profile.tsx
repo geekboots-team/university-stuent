@@ -97,7 +97,6 @@ export default function ProfileScreen() {
         .order("name", { ascending: true });
 
       if (error) {
-        console.error("Error fetching courses:", error);
         return;
       }
 
@@ -117,7 +116,6 @@ export default function ProfileScreen() {
         .eq("user_id", studentId);
 
       if (error) {
-        console.error("Error fetching applied universities:", error);
         return;
       }
 
@@ -139,7 +137,6 @@ export default function ProfileScreen() {
         .single();
 
       if (error) {
-        console.error("Error fetching student data:", error);
         return;
       }
 
@@ -219,7 +216,6 @@ export default function ProfileScreen() {
       });
 
       if (error) {
-        console.error("Error adding university:", error);
         Alert.alert("Error", "Failed to add university");
         return;
       }
@@ -229,8 +225,7 @@ export default function ProfileScreen() {
       setSelectedCourse("");
       setAddUniversityModalVisible(false);
       Alert.alert("Success", "University added successfully!");
-    } catch (error) {
-      console.error("Error adding university:", error);
+    } catch {
       Alert.alert("Error", "An unexpected error occurred");
     } finally {
       setAddingUniversity(false);
@@ -378,9 +373,30 @@ export default function ProfileScreen() {
     try {
       setUploadingImage(true);
 
-      const publicUrl = await uploadProfileImageFromUri(uri, studentId || "");
+      const imageUrl = await uploadProfileImageFromUri(uri, studentId || "");
 
-      setProfilePic(publicUrl);
+      const { error: error1 } = await supabase.auth.updateUser({
+        data: {
+          avatar_url: `${imageUrl}`,
+        },
+      });
+
+      if (error1) {
+        Alert.alert("Error", "Failed to update avatar");
+        return;
+      }
+
+      const { error: error2 } = await supabase
+        .from("students")
+        .update({ profile_pic: imageUrl })
+        .eq("id", studentId);
+
+      if (error2) {
+        Alert.alert("Error", "Failed to update profile picture in database");
+        return;
+      }
+
+      setProfilePic(imageUrl);
       Alert.alert("Success", "Profile picture uploaded successfully!");
     } catch {
       Alert.alert("Error", "Failed to upload image. Please try again.");
