@@ -520,6 +520,52 @@ export default function ProfileScreen() {
                   )}
                 </View>
               </View>
+              {!isEditing && (
+                <>
+                  <View style={styles.locationRow}>
+                    <Ionicons
+                      name="location-outline"
+                      size={18}
+                      color={Colors[colorScheme ?? "light"].icon}
+                      style={styles.locationIcon}
+                    />
+                    <ThemedText style={styles.locationText}>
+                      {[city, state, country].filter(Boolean).join(", ") || "-"}
+                    </ThemedText>
+                  </View>
+
+                  {(collegeName || nativeCourse) && (
+                    <View style={styles.educationRow}>
+                      <Ionicons
+                        name="school-outline"
+                        size={18}
+                        color={Colors[colorScheme ?? "light"].icon}
+                        style={styles.locationIcon}
+                      />
+                      <View style={styles.educationDetails}>
+                        {collegeName && (
+                          <ThemedText style={styles.collegeName}>
+                            {collegeName}{" "}
+                            {nativeCourse && (
+                              <ThemedText style={styles.courseText}>
+                                ({nativeCourse})
+                              </ThemedText>
+                            )}
+                          </ThemedText>
+                        )}
+
+                        {(nativeCity || nativeState || nativeCountry) && (
+                          <ThemedText style={styles.educationLocation}>
+                            {[nativeCity, nativeState, nativeCountry]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </ThemedText>
+                        )}
+                      </View>
+                    </View>
+                  )}
+                </>
+              )}
 
               {/* Edit Button */}
 
@@ -589,120 +635,88 @@ export default function ProfileScreen() {
               </View>
 
               {/* Current Location Section */}
-              <View
-                style={[
-                  styles.section,
-                  {
-                    borderBottomColor: Colors[colorScheme ?? "light"].subText,
-                  },
-                ]}
-              >
-                <ThemedText
+              {isEditing && (
+                <View
                   style={[
-                    styles.sectionTitle,
-                    { color: Colors[colorScheme ?? "light"].icon },
+                    styles.section,
+                    {
+                      borderBottomColor: Colors[colorScheme ?? "light"].subText,
+                    },
                   ]}
                 >
-                  Current Location
-                </ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.sectionTitle,
+                      { color: Colors[colorScheme ?? "light"].icon },
+                    ]}
+                  >
+                    Current Location
+                  </ThemedText>
 
-                {isEditing ? (
-                  <>
-                    <ThemedInput
-                      label="City"
-                      placeholder="Enter your city"
-                      value={city}
-                      onChangeText={setCity}
-                    />
+                  <ThemedInput
+                    label="City"
+                    placeholder="Enter your city"
+                    value={city}
+                    onChangeText={setCity}
+                  />
 
-                    <View style={styles.row}>
-                      <View style={styles.halfWidth}>
-                        <ThemedInput
-                          label="State"
-                          placeholder="Enter state"
-                          value={state}
-                          onChangeText={setState}
-                        />
-                      </View>
-                      <View style={styles.halfWidth}>
-                        <ThemedInput
-                          label="Country"
-                          placeholder="Enter country"
-                          value={country}
-                          onChangeText={setCountry}
-                        />
-                      </View>
+                  <View style={styles.row}>
+                    <View style={styles.halfWidth}>
+                      <ThemedInput
+                        label="State"
+                        placeholder="Enter state"
+                        value={state}
+                        onChangeText={setState}
+                      />
                     </View>
+                    <View style={styles.halfWidth}>
+                      <ThemedInput
+                        label="Country"
+                        placeholder="Enter country"
+                        value={country}
+                        onChangeText={setCountry}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
 
+              {/* Native Location Section */}
+              {isEditing && (
+                <View
+                  style={[
+                    styles.section,
+                    {
+                      borderBottomColor: Colors[colorScheme ?? "light"].subText,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.sectionTitle,
+                      { color: Colors[colorScheme ?? "light"].icon },
+                    ]}
+                  >
+                    Bachelor Degree
+                  </ThemedText>
+
+                  <>
                     <ThemedInput
                       label="College Name"
                       placeholder="Enter your college name"
                       value={collegeName}
                       onChangeText={setCollegeName}
                     />
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>City</ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {city || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>State</ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {state || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>Country</ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {country || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>
-                        College Name
-                      </ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {collegeName || "-"}
-                      </ThemedText>
-                    </View>
-                  </>
-                )}
-              </View>
-
-              {/* Native Location Section */}
-              <View
-                style={[
-                  styles.section,
-                  {
-                    borderBottomColor: Colors[colorScheme ?? "light"].subText,
-                  },
-                ]}
-              >
-                <ThemedText
-                  style={[
-                    styles.sectionTitle,
-                    { color: Colors[colorScheme ?? "light"].icon },
-                  ]}
-                >
-                  Native Location
-                </ThemedText>
-
-                {isEditing ? (
-                  <>
                     <ThemedInput
-                      label="Native Course"
-                      placeholder="Enter your native course"
+                      label="Course Name"
+                      placeholder="Enter your course name"
                       value={nativeCourse}
                       onChangeText={setNativeCourse}
                     />
 
                     <ThemedInput
-                      label="Native City"
-                      placeholder="Enter your native city"
+                      label="City"
+                      placeholder="Enter your city"
                       value={nativeCity}
                       onChangeText={setNativeCity}
                     />
@@ -710,7 +724,7 @@ export default function ProfileScreen() {
                     <View style={styles.row}>
                       <View style={styles.halfWidth}>
                         <ThemedInput
-                          label="Native State"
+                          label="State"
                           placeholder="Enter state"
                           value={nativeState}
                           onChangeText={setNativeState}
@@ -718,7 +732,7 @@ export default function ProfileScreen() {
                       </View>
                       <View style={styles.halfWidth}>
                         <ThemedInput
-                          label="Native Country"
+                          label="Country"
                           placeholder="Enter country"
                           value={nativeCountry}
                           onChangeText={setNativeCountry}
@@ -726,43 +740,8 @@ export default function ProfileScreen() {
                       </View>
                     </View>
                   </>
-                ) : (
-                  <>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>
-                        Native Course
-                      </ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {nativeCourse || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>
-                        Native City
-                      </ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {nativeCity || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>
-                        Native State
-                      </ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {nativeState || "-"}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.viewRow}>
-                      <ThemedText style={styles.viewLabel}>
-                        Native Country
-                      </ThemedText>
-                      <ThemedText style={styles.viewValue}>
-                        {nativeCountry || "-"}
-                      </ThemedText>
-                    </View>
-                  </>
-                )}
-              </View>
+                </View>
+              )}
 
               {/* Applied Universities Section */}
               <View
@@ -1057,6 +1036,41 @@ const styles = StyleSheet.create({
   editButtonContainer: {
     alignItems: "flex-end",
     marginLeft: "auto",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  locationIcon: {
+    marginRight: 6,
+  },
+  locationText: {
+    fontSize: 14,
+    opacity: 0.8,
+  },
+  educationRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  educationDetails: {
+    flex: 1,
+  },
+  collegeName: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  courseText: {
+    fontSize: 12,
+    opacity: 0.85,
+  },
+  educationLocation: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 2,
   },
   viewRow: {
     flexDirection: "row",
