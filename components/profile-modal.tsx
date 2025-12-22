@@ -8,9 +8,11 @@ import { supabase } from "@/lib/supabase";
 import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -49,6 +51,8 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const [nativeCity, setNativeCity] = useState("");
   const [nativeState, setNativeState] = useState("");
   const [nativeCountry, setNativeCountry] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -155,6 +159,7 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
         setNativeCity(student.native_city || "");
         setNativeState(student.native_state || "");
         setNativeCountry(student.native_country || "");
+        setProfilePic(student.profile_pic || "");
       }
     } catch (error) {
       console.error("Error fetching student data:", error);
@@ -315,6 +320,7 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
           native_city: nativeCity.trim(),
           native_state: nativeState.trim(),
           native_country: nativeCountry.trim(),
+          profile_pic: profilePic,
           status: "active", // Change status to active after profile update
         })
         .eq("id", studentId);
@@ -365,6 +371,83 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
         },
       ]
     );
+  };
+
+  const handlePickImage = async () => {
+    try {
+      // Request permission
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photo library to upload a profile picture."
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        await uploadImage(imageUri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image. Please try again.");
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    try {
+      setUploadingImage(true);
+
+      // Get file extension
+      const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
+      const fileName = `${studentId}_${Date.now()}.${ext}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Fetch the image and convert to blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Convert blob to ArrayBuffer
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, arrayBuffer, {
+          contentType: `image/${ext}`,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        Alert.alert("Error", "Failed to upload image. Please try again.");
+        return;
+      }
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+      setProfilePic(publicUrl);
+      Alert.alert("Success", "Profile picture uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   return (
@@ -424,6 +507,70 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
               </View>
             ) : (
               <>
+                {/* Profile Picture Section */}
+                <View style={styles.profilePicSection}>
+                  <TouchableOpacity
+                    onPress={handlePickImage}
+                    disabled={uploadingImage}
+                    style={styles.profilePicContainer}
+                  >
+                    {profilePic ? (
+                      <Image
+                        source={{ uri: profilePic }}
+                        style={styles.profilePic}
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          styles.profilePicPlaceholder,
+                          {
+                            backgroundColor:
+                              colorScheme === "dark" ? "#333" : "#e0e0e0",
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="person"
+                          size={30}
+                          color={Colors[colorScheme ?? "light"].subText}
+                        />
+                      </View>
+                    )}
+                    <View
+                      style={[
+                        styles.editPicOverlay,
+                        {
+                          backgroundColor:
+                            colorScheme === "dark"
+                              ? "rgba(0,0,0,0.6)"
+                              : "rgba(0,0,0,0.4)",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={uploadingImage ? "hourglass" : "camera"}
+                        size={18}
+                        color="#fff"
+                      />
+                    </View>
+                  </TouchableOpacity>
+                  <View>
+                    <ThemedText style={styles.profileName}>
+                      {firstName || lastName
+                        ? `${firstName} ${lastName}`.trim()
+                        : "Your Name"}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.tapToUploadText,
+                        { color: Colors[colorScheme ?? "light"].subText },
+                      ]}
+                    >
+                      Tap to upload photo
+                    </ThemedText>
+                  </View>
+                </View>
+
                 {/* Basic Information Section */}
                 <View
                   style={[
@@ -526,16 +673,9 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                       />
                     </View>
                   </View>
-
-                  <ThemedInput
-                    label="College Name"
-                    placeholder="Enter your college name"
-                    value={collegeName}
-                    onChangeText={setCollegeName}
-                  />
                 </View>
 
-                {/* Native Location Section */}
+                {/* Bachelor Degree Section */}
                 <View
                   style={[
                     styles.section,
@@ -550,19 +690,26 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                       { color: Colors[colorScheme ?? "light"].icon },
                     ]}
                   >
-                    Native Location
+                    Bachelor Degree
                   </ThemedText>
 
                   <ThemedInput
-                    label="Native Course"
-                    placeholder="Enter your native course"
+                    label="College Name"
+                    placeholder="Enter your college name"
+                    value={collegeName}
+                    onChangeText={setCollegeName}
+                  />
+
+                  <ThemedInput
+                    label="Course Name"
+                    placeholder="Enter your course name"
                     value={nativeCourse}
                     onChangeText={setNativeCourse}
                   />
 
                   <ThemedInput
-                    label="Native City"
-                    placeholder="Enter your native city"
+                    label="City"
+                    placeholder="Enter your city"
                     value={nativeCity}
                     onChangeText={setNativeCity}
                   />
@@ -570,7 +717,7 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                   <View style={styles.row}>
                     <View style={styles.halfWidth}>
                       <ThemedInput
-                        label="Native State"
+                        label="State"
                         placeholder="Enter state"
                         value={nativeState}
                         onChangeText={setNativeState}
@@ -578,7 +725,7 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                     </View>
                     <View style={styles.halfWidth}>
                       <ThemedInput
-                        label="Native Country"
+                        label="Country"
                         placeholder="Enter country"
                         value={nativeCountry}
                         onChangeText={setNativeCountry}
@@ -840,6 +987,51 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 32,
     marginBottom: 20,
+  },
+  profilePicSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  profilePicContainer: {
+    position: "relative",
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+    overflow: "hidden",
+  },
+  profilePic: {
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+  },
+  profilePicPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 80,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editPicOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  tapToUploadText: {
+    fontSize: 12,
+    marginTop: 4,
   },
   appliedList: {
     marginBottom: 16,
