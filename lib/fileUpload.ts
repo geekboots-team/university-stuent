@@ -1,5 +1,47 @@
 import { supabase } from "./supabase";
 
+/**
+ * Upload profile image from a URI (React Native compatible)
+ * @param uri - The local URI of the image
+ * @param userId - The user ID for naming the file
+ * @returns The public URL of the uploaded image
+ */
+export async function uploadProfileImageFromUri(
+  uri: string,
+  userId: string
+): Promise<string> {
+  // Get file extension
+  const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
+  const fileName = `${userId}_${Date.now()}.${ext}`;
+  const filePath = `avatars/${fileName}`;
+
+  // Fetch the image and convert to blob
+  const response = await fetch(uri);
+  const blob = await response.blob();
+
+  // Convert blob to ArrayBuffer
+  const arrayBuffer = await new Response(blob).arrayBuffer();
+
+  // Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from("universitySenior")
+    .upload(filePath, arrayBuffer, {
+      contentType: `image/${ext}`,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload image: ${uploadError.message}`);
+  }
+
+  // Get public URL
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("universitySenior").getPublicUrl(filePath);
+
+  return publicUrl;
+}
+
 export async function uploadProfileImage(
   file: File,
   userId: string

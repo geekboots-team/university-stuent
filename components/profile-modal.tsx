@@ -4,6 +4,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
+import { uploadProfileImageFromUri } from "@/lib/fileUpload";
 import { supabase } from "@/lib/supabase";
 import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
@@ -399,8 +400,7 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
         const imageUri = result.assets[0].uri;
         await uploadImage(imageUri);
       }
-    } catch (error) {
-      console.error("Error picking image:", error);
+    } catch {
       Alert.alert("Error", "Failed to pick image. Please try again.");
     }
   };
@@ -409,41 +409,11 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
     try {
       setUploadingImage(true);
 
-      // Get file extension
-      const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
-      const fileName = `${studentId}_${Date.now()}.${ext}`;
-      const filePath = `avatars/${fileName}`;
-
-      // Fetch the image and convert to blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
-
-      // Convert blob to ArrayBuffer
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, arrayBuffer, {
-          contentType: `image/${ext}`,
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        Alert.alert("Error", "Failed to upload image. Please try again.");
-        return;
-      }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = await uploadProfileImageFromUri(uri, studentId || "");
 
       setProfilePic(publicUrl);
       Alert.alert("Success", "Profile picture uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading image:", error);
+    } catch {
       Alert.alert("Error", "Failed to upload image. Please try again.");
     } finally {
       setUploadingImage(false);

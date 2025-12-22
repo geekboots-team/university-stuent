@@ -5,12 +5,12 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
+import { uploadProfileImageFromUri } from "@/lib/fileUpload";
 import { supabase } from "@/lib/supabase";
 import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -31,7 +31,6 @@ const genderOptions: DropdownOption[] = [
 ];
 
 export default function ProfileScreen() {
-  const router = useRouter();
   const { studentId, upStudentStatus } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
@@ -379,43 +378,11 @@ export default function ProfileScreen() {
     try {
       setUploadingImage(true);
 
-      //   const imageUrl = await uploadProfileImage(uri, studentId || "");
-
-      // Get file extension
-      const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
-      const fileName = `${studentId}_${Date.now()}.${ext}`;
-      const filePath = `avatars/${fileName}`;
-
-      // Fetch the image and convert to blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
-
-      // Convert blob to ArrayBuffer
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, arrayBuffer, {
-          contentType: `image/${ext}`,
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        Alert.alert("Error", "Failed to upload image. Please try again.");
-        return;
-      }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = await uploadProfileImageFromUri(uri, studentId || "");
 
       setProfilePic(publicUrl);
       Alert.alert("Success", "Profile picture uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading image:", error);
+    } catch {
       Alert.alert("Error", "Failed to upload image. Please try again.");
     } finally {
       setUploadingImage(false);
