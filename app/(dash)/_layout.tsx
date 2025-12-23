@@ -128,6 +128,18 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="accommodation"
+        options={{
+          title: "Accommodations",
+          headerShown: true,
+          header: () => <CustomHeader title="Accommodations" />,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="bed" color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="individual-chat"
         options={{
