@@ -1,6 +1,7 @@
 import { Tabs, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Image,
   Modal,
   Pressable,
   StyleSheet,
@@ -8,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { ProfileModal } from "@/components/profile-modal";
@@ -15,6 +17,79 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+function CustomHeader({ title }: { title: string }) {
+  const colorScheme = useColorScheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      style={[
+        headerStyles.container,
+        {
+          backgroundColor: Colors[colorScheme ?? "light"].background,
+          paddingTop: insets.top + 8,
+        },
+      ]}
+    >
+      <View style={headerStyles.leftSection}>
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={headerStyles.logo}
+          resizeMode="contain"
+        />
+        <Text
+          style={[
+            headerStyles.title,
+            { color: Colors[colorScheme ?? "light"].tint },
+          ]}
+        >
+          {title}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={headerStyles.profileButton}
+        onPress={() => router.push("/(dash)/profile")}
+      >
+        <IconSymbol
+          size={28}
+          name="person.circle.fill"
+          color={Colors[colorScheme ?? "light"].tint}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+  },
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  profileButton: {
+    padding: 4,
+  },
+});
 
 function TabBarMenu({ color }: { color: string }) {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -169,12 +244,8 @@ export default function TabLayout() {
         name="dashboard"
         options={{
           title: "Dashboard",
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: "600",
-            color: Colors[colorScheme ?? "light"].tint,
-          },
           headerShown: true,
+          header: () => <CustomHeader title="Dashboard" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
@@ -184,12 +255,8 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: "600",
-            color: Colors[colorScheme ?? "light"].tint,
-          },
           headerShown: true,
+          header: () => <CustomHeader title="Chat" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="message.fill" color={color} />
           ),
@@ -199,12 +266,8 @@ export default function TabLayout() {
         name="group-chat"
         options={{
           title: "Groups",
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: "600",
-            color: Colors[colorScheme ?? "light"].tint,
-          },
           headerShown: true,
+          header: () => <CustomHeader title="Groups" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.3.fill" color={color} />
           ),
@@ -239,11 +302,7 @@ export default function TabLayout() {
           href: null, // Hide from tab bar
           headerShown: true,
           title: "My Profile",
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: "600",
-            color: Colors[colorScheme ?? "light"].tint,
-          },
+          header: () => <CustomHeader title="My Profile" />,
         }}
       />
     </Tabs>

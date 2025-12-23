@@ -37,22 +37,6 @@ export default function DashboardScreen() {
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={styles.optionCard}
-          onPress={handleChatPress}
-          activeOpacity={0.8}
-        >
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: Colors[colorScheme ?? "light"].text },
-            ]}
-          >
-            <IconSymbol size={28} name="message.fill" color="#fff" />
-          </View>
-          <ThemedText style={styles.optionTitle}>Chat</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.optionCard}
           onPress={handleGroupChatPress}
           activeOpacity={0.8}
         >
@@ -65,22 +49,6 @@ export default function DashboardScreen() {
             <IconSymbol size={28} name="person.3.fill" color="#fff" />
           </View>
           <ThemedText style={styles.optionTitle}>Group Chat</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.optionCard}
-          onPress={handleProfilePress}
-          activeOpacity={0.8}
-        >
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: Colors[colorScheme ?? "light"].text },
-            ]}
-          >
-            <IconSymbol size={28} name="person.fill" color="#fff" />
-          </View>
-          <ThemedText style={styles.optionTitle}>Profile</ThemedText>
         </TouchableOpacity>
       </View>
     </ThemedView>
