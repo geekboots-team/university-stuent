@@ -48,7 +48,28 @@ export default function AccommodationScreen() {
   const [studentUniversities, setStudentUniversities] = useState<
     { id: string; name: string }[]
   >([]);
+  const [userGender, setUserGender] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchUsrProf = async () => {
+      try {
+        const { data: profileData, error } = await supabase
+          .from("students")
+          .select("gender")
+          .eq("id", studentId)
+          .single();
+
+        if (!error && profileData) {
+          setUserGender(profileData.gender);
+        }
+      } catch {
+        console.error("Error fetching profile!");
+      }
+    };
+
+    if (studentTkn) fetchUsrProf();
+  }, [studentTkn, studentId]);
 
   // Fetch student's universities
   const fetchStudentUniversities = useCallback(async () => {
@@ -501,28 +522,29 @@ export default function AccommodationScreen() {
               label="Mode"
               placeholder="Select mode"
               options={[
-                { label: "Sharing", value: "sharing" },
-                { label: "Individual", value: "individual" },
+                { label: "Hosting", value: "hosting" },
+                { label: "Seeking", value: "seeking" },
               ]}
               value={formData.mode}
               onSelect={(value) => setFormData({ ...formData, mode: value })}
             />
-
-            <ThemedDropdown
-              label="Female Only"
-              placeholder="Select option"
-              options={[
-                { label: "No", value: "No" },
-                { label: "Yes", value: "Yes" },
-              ]}
-              value={formData.is_female}
-              onSelect={(value) =>
-                setFormData({
-                  ...formData,
-                  is_female: value as "Yes" | "No",
-                })
-              }
-            />
+            {userGender?.toLowerCase() === "female" && (
+              <ThemedDropdown
+                label="Female Only"
+                placeholder="Select option"
+                options={[
+                  { label: "No", value: "No" },
+                  { label: "Yes", value: "Yes" },
+                ]}
+                value={formData.is_female}
+                onSelect={(value) =>
+                  setFormData({
+                    ...formData,
+                    is_female: value as "Yes" | "No",
+                  })
+                }
+              />
+            )}
 
             <ThemedInput
               label="Map URL (Optional)"
@@ -553,7 +575,12 @@ export default function AccommodationScreen() {
     </Modal>
   );
 
-  const currentList = activeTab === "all" ? accommodations : myAccommodations;
+  const currentList =
+    activeTab === "all"
+      ? accommodations
+      : activeTab === "my"
+      ? myAccommodations
+      : accommodations.filter((acc) => acc.status === "accepted");
 
   return (
     <ThemedView style={styles.container}>

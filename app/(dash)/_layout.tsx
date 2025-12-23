@@ -38,16 +38,38 @@ function CustomHeader({ title }: { title: string }) {
           {title}
         </Text>
       </View>
-      <TouchableOpacity
-        style={headerStyles.profileButton}
-        onPress={() => router.push("/(dash)/profile")}
-      >
-        <IconSymbol
-          size={28}
-          name="person.circle.fill"
-          color={Colors[colorScheme ?? "light"].background}
-        />
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <TouchableOpacity
+          style={headerStyles.profileButton}
+          onPress={() => router.push("/(dash)/profile")}
+        >
+          <IconSymbol
+            size={28}
+            name="support"
+            color={Colors[colorScheme ?? "light"].background}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={headerStyles.profileButton}
+          onPress={() => router.push("/(dash)/profile")}
+        >
+          <IconSymbol
+            size={28}
+            name="notifications"
+            color={Colors[colorScheme ?? "light"].background}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={headerStyles.profileButton}
+          onPress={() => router.push("/(dash)/profile")}
+        >
+          <IconSymbol
+            size={28}
+            name="person.circle.fill"
+            color={Colors[colorScheme ?? "light"].background}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
