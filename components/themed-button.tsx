@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   small: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
   medium: {
     paddingVertical: 12,

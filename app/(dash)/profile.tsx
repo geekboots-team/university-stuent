@@ -31,7 +31,7 @@ const genderOptions: DropdownOption[] = [
 ];
 
 export default function ProfileScreen() {
-  const { studentId, upStudentStatus } = useAppContext();
+  const { studentId, upStudentStatus, logoutStudent } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -501,6 +501,13 @@ export default function ProfileScreen() {
                       size="small"
                     />
                   )}
+
+                  <ThemedButton
+                    title="Logout"
+                    onPress={logoutStudent}
+                    variant="outline"
+                    size="small"
+                  />
                 </View>
               </View>
               {!isEditing && (
@@ -1017,8 +1024,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   editButtonContainer: {
+    flexDirection: "row",
     alignItems: "flex-end",
     marginLeft: "auto",
+    gap: 8,
   },
   locationRow: {
     flexDirection: "row",
