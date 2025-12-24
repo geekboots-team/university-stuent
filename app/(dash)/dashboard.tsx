@@ -14,26 +14,14 @@ export default function DashboardScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
 
-  const handleChatPress = () => {
-    router.push("/(dash)/chat");
-  };
 
   const handleGroupChatPress = () => {
     router.push("/(dash)/group-chat");
   };
 
-  const handleProfilePress = () => {
-    router.push("/(dash)/profile");
-  };
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.subtitle}>
-          Welcome to UniversitySeniors
-        </ThemedText>
-      </View>
-
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={styles.optionCard}
@@ -58,6 +46,8 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
+    justifyContent: "center",
   },
   header: {
     paddingTop: 20,

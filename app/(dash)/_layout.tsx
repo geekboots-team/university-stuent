@@ -1,12 +1,13 @@
 import { Tabs, useRouter } from "expo-router";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 
 function CustomHeader({ title }: { title: string }) {
   const colorScheme = useColorScheme();
@@ -25,18 +26,17 @@ function CustomHeader({ title }: { title: string }) {
     >
       <View style={headerStyles.leftSection}>
         <Image
-          source={require("@/assets/images/icon.png")}
+          source={require("@/assets/images/university-seniors.png")}
           style={headerStyles.logo}
-          resizeMode="contain"
         />
-        <Text
+        {/* <Text
           style={[
             headerStyles.title,
             { color: Colors[colorScheme ?? "light"].background },
           ]}
         >
           {title}
-        </Text>
+        </Text> */}
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <TouchableOpacity
@@ -87,12 +87,12 @@ const headerStyles = StyleSheet.create({
   leftSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 5,
   },
   logo: {
-    width: 32,
+    width: 90,
     height: 32,
-    borderRadius: 6,
+    resizeMode: "contain",
   },
   title: {
     fontSize: 18,
@@ -101,91 +101,113 @@ const headerStyles = StyleSheet.create({
   profileButton: {
     padding: 4,
   },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 90,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.light.tint,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 999,
+  },
 });
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.dark.tint,
-        tabBarInactiveTintColor: Colors.light.background,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: Colors.light.tint,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "Dashboard",
-          headerShown: true,
-          header: () => <CustomHeader title="Dashboard" />,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: Colors.dark.tint,
+          tabBarInactiveTintColor: Colors.light.background,
+          headerShown: false,
+          tabBarButton: HapticTab,
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            backgroundColor: Colors.light.tint,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: "Chat",
-          headerShown: true,
-          header: () => <CustomHeader title="Chat" />,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="message.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="group-chat"
-        options={{
-          title: "Groups",
-          headerShown: true,
-          header: () => <CustomHeader title="Groups" />,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.3.fill" color={color} />
-          ),
-        }}
-      />
+      >
+        <Tabs.Screen
+          name="dashboard"
+          options={{
+            title: "Dashboard",
+            headerShown: true,
+            header: () => <CustomHeader title="Dashboard" />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="house.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="chat"
+          options={{
+            title: "Chat",
+            headerShown: true,
+            header: () => <CustomHeader title="Chat" />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="message.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="group-chat"
+          options={{
+            title: "Groups",
+            headerShown: true,
+            header: () => <CustomHeader title="Groups" />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="person.3.fill" color={color} />
+            ),
+          }}
+        />
 
-      <Tabs.Screen
-        name="accommodation"
-        options={{
-          title: "Accommodations",
-          headerShown: true,
-          header: () => <CustomHeader title="Accommodations" />,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bed.double.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="individual-chat"
-        options={{
-          href: null, // Hide from tab bar
-          headerShown: true,
-        }}
-      />
-      <Tabs.Screen
-        name="group-individual-chat"
-        options={{
-          href: null, // Hide from tab bar
-          headerShown: true,
-        }}
-      />
+        <Tabs.Screen
+          name="accommodation"
+          options={{
+            title: "Accommodations",
+            headerShown: true,
+            header: () => <CustomHeader title="Accommodations" />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name="bed.double.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="individual-chat"
+          options={{
+            href: null, // Hide from tab bar
+            headerShown: true,
+          }}
+        />
+        <Tabs.Screen
+          name="group-individual-chat"
+          options={{
+            href: null, // Hide from tab bar
+            headerShown: true,
+          }}
+        />
 
-      <Tabs.Screen
-        name="profile"
-        options={{
-          href: null, // Hide from tab bar
-          headerShown: true,
-          title: "My Profile",
-          header: () => <CustomHeader title="My Profile" />,
-        }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="profile"
+          options={{
+            href: null, // Hide from tab bar
+            headerShown: true,
+            title: "My Profile",
+            header: () => <CustomHeader title="My Profile" />,
+          }}
+        />
+      </Tabs>
+      <TouchableOpacity style={headerStyles.fab}>
+        <Ionicons name="document-text-outline" size={28} color="#fff" />
+      </TouchableOpacity>
+    </>
   );
 }
