@@ -23,7 +23,7 @@ const MAPPING = {
   mail: "mail",
   ellipsis: "more-vert",
   "person.circle.fill": "account-circle",
-  bed: "king-bed",
+  "bed.double.fill": "king-bed",
   support: "support-agent",
   notifications: "notifications",
 } satisfies Record<string, MaterialIconName>;

@@ -158,7 +158,7 @@ export default function TabLayout() {
           headerShown: true,
           header: () => <CustomHeader title="Accommodations" />,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bed" color={color} />
+            <IconSymbol size={28} name="bed.double.fill" color={color} />
           ),
         }}
       />
