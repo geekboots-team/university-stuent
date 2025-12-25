@@ -41,11 +41,11 @@ function CustomHeader({ title }: { title: string }) {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <TouchableOpacity
           style={headerStyles.profileButton}
-          onPress={() => router.push("/(dash)/profile")}
+          onPress={() => router.push("/(dash)/support")}
         >
           <IconSymbol
             size={28}
-            name="support"
+            name="questionmark.circle.fill"
             color={Colors[colorScheme ?? "light"].background}
           />
         </TouchableOpacity>
@@ -55,7 +55,7 @@ function CustomHeader({ title }: { title: string }) {
         >
           <IconSymbol
             size={28}
-            name="notifications"
+            name="bell.fill"
             color={Colors[colorScheme ?? "light"].background}
           />
         </TouchableOpacity>
@@ -121,6 +121,7 @@ const headerStyles = StyleSheet.create({
 });
 
 export default function TabLayout() {
+  const router = useRouter();
   return (
     <>
       <Tabs
@@ -160,6 +161,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="group-chat"
           options={{
+            href: null,
             title: "Groups",
             headerShown: true,
             header: () => <CustomHeader title="Groups" />,
@@ -177,6 +179,34 @@ export default function TabLayout() {
             header: () => <CustomHeader title="Accommodations" />,
             tabBarIcon: ({ color }) => (
               <IconSymbol size={28} name="bed.double.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="notes"
+          options={{
+            href: null,
+            title: "Notes",
+            headerShown: true,
+            header: () => <CustomHeader title="Notes" />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons size={28} name="document-text-outline" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="support"
+          options={{
+            href: null,
+            title: "Support",
+            headerShown: true,
+            header: () => <CustomHeader title="Support" />,
+            tabBarIcon: ({ color }) => (
+              <IconSymbol
+                size={28}
+                name="questionmark.circle.fill"
+                color={color}
+              />
             ),
           }}
         />
@@ -205,7 +235,10 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <TouchableOpacity style={headerStyles.fab}>
+      <TouchableOpacity
+        style={headerStyles.fab}
+        onPress={() => router.push("/(dash)/notes")}
+      >
         <Ionicons name="document-text-outline" size={28} color="#fff" />
       </TouchableOpacity>
     </>

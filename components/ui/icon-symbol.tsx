@@ -24,8 +24,8 @@ const MAPPING = {
   ellipsis: "more-vert",
   "person.circle.fill": "account-circle",
   "bed.double.fill": "king-bed",
-  support: "support-agent",
-  notifications: "notifications",
+  "questionmark.circle.fill": "support-agent",
+  "bell.fill": "notifications",
 } satisfies Record<string, MaterialIconName>;
 
 type IconSymbolName = keyof typeof MAPPING;
