@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Groups } from "@/models/group.model";
 import { AppliedUniversity } from "@/models/student.model";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -158,12 +159,7 @@ export default function GroupChatScreen() {
         return true;
       });
 
-      setGroups((prev) => {
-        const newGroups = filteredData.filter(
-          (group) => !prev.some((existing) => existing.id === group.id)
-        );
-        return [...prev, ...newGroups];
-      });
+      setGroups(filteredData);
     } catch {
       Alert.alert("Error", "Failed to fetch groups");
     } finally {
@@ -174,6 +170,12 @@ export default function GroupChatScreen() {
   useEffect(() => {
     fetchGroups();
   }, [studentUniversity, fetchGroups]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchGroups();
+    }, [fetchGroups])
+  );
 
   const renderGroupItem = ({ item }: { item: Groups }) => (
     <TouchableOpacity
