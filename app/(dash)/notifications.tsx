@@ -3,10 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
-import {
-  isNotificationRead,
-  Notification,
-} from "@/models/notification.model";
+import { isNotificationRead, Notification } from "@/models/notification.model";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -15,8 +12,8 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
-  View,
   useColorScheme,
+  View,
 } from "react-native";
 
 type FilterType = "all" | "unread" | "read";
@@ -137,13 +134,9 @@ export default function NotificationsScreen() {
     if (activeFilter === "all") {
       setFilteredNotifications(notifications);
     } else if (activeFilter === "unread") {
-      setFilteredNotifications(
-        notifications.filter((n) => !isRead(n))
-      );
+      setFilteredNotifications(notifications.filter((n) => !isRead(n)));
     } else {
-      setFilteredNotifications(
-        notifications.filter((n) => isRead(n))
-      );
+      setFilteredNotifications(notifications.filter((n) => isRead(n)));
     }
   }, [activeFilter, notifications, isRead]);
 
@@ -157,10 +150,7 @@ export default function NotificationsScreen() {
         readAt: new Date().toISOString(),
       };
 
-      const updatedIsRead = [
-        ...(notification.is_read || []),
-        newReadEntry,
-      ];
+      const updatedIsRead = [...(notification.is_read || []), newReadEntry];
 
       const { error } = await supabase
         .from("notifications")
@@ -172,9 +162,7 @@ export default function NotificationsScreen() {
       // Update local state
       setNotifications((prev) =>
         prev.map((n) =>
-          n.id === notification.id
-            ? { ...n, is_read: updatedIsRead }
-            : n
+          n.id === notification.id ? { ...n, is_read: updatedIsRead } : n
         )
       );
     } catch (error) {
@@ -196,10 +184,7 @@ export default function NotificationsScreen() {
           readAt: new Date().toISOString(),
         };
 
-        const updatedIsRead = [
-          ...(notification.is_read || []),
-          newReadEntry,
-        ];
+        const updatedIsRead = [...(notification.is_read || []), newReadEntry];
 
         await supabase
           .from("notifications")
@@ -264,11 +249,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const renderNotificationItem = ({
-    item,
-  }: {
-    item: Notification;
-  }) => {
+  const renderNotificationItem = ({ item }: { item: Notification }) => {
     const notificationIsRead = isRead(item);
 
     return (
@@ -321,10 +302,7 @@ export default function NotificationsScreen() {
           </View>
         </View>
 
-        <ThemedText
-          style={styles.notificationMessage}
-          numberOfLines={2}
-        >
+        <ThemedText style={styles.notificationMessage} numberOfLines={2}>
           {item.message}
         </ThemedText>
 
@@ -350,9 +328,7 @@ export default function NotificationsScreen() {
               { backgroundColor: Colors.light.tint + "20" },
             ]}
           >
-            <ThemedText
-              style={[styles.typeText, { color: Colors.light.tint }]}
-            >
+            <ThemedText style={[styles.typeText, { color: Colors.light.tint }]}>
               {item.type.toUpperCase()}
             </ThemedText>
           </View>

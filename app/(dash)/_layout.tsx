@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAppContext } from "@/context/AppContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { isNotificationRead, Notification } from "@/models/notification.model";
 import { Ionicons } from "@expo/vector-icons";
@@ -91,7 +91,9 @@ function CustomHeader({ title }: { title: string }) {
       const unread = (relevantNotifications || []).filter(
         (notification: Notification) => {
           if (!notification.is_read) return true;
-          return !notification.is_read.some((read) => read.userId === studentId);
+          return !notification.is_read.some(
+            (read) => read.userId === studentId
+          );
         }
       ).length;
 
