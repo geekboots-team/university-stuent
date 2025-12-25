@@ -3,6 +3,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedLink } from "@/components/themed-link";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
@@ -172,9 +173,12 @@ export default function LoginScreen() {
 
           {/* Footer Section */}
           <View style={styles.footerSection}>
-            <ThemedText style={styles.secureText}>
-              🔒 Secure login • Your data is protected
-            </ThemedText>
+            <View style={styles.secureContainer}>
+              <IconSymbol name="lock.fill" size={14} color={Colors.dark.text} />
+              <ThemedText style={styles.secureText}>
+                Secure login • Your data is protected
+              </ThemedText>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -288,6 +292,11 @@ const styles = StyleSheet.create({
   footerSection: {
     marginTop: 40,
     alignItems: "center",
+  },
+  secureContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   secureText: {
     color: "#666",

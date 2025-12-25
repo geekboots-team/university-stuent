@@ -26,6 +26,7 @@ const MAPPING = {
   "bed.double.fill": "king-bed",
   "questionmark.circle.fill": "support-agent",
   "bell.fill": "notifications",
+  "lock.fill": "lock",
 } satisfies Record<string, MaterialIconName>;
 
 type IconSymbolName = keyof typeof MAPPING;

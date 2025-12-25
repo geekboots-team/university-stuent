@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
+  View,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
@@ -9,6 +10,7 @@ import {
 
 import { Colors } from "@/constants/theme";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "./themed-text";
 
 export type ThemedButtonProps = Omit<PressableProps, "style"> & {
@@ -17,6 +19,7 @@ export type ThemedButtonProps = Omit<PressableProps, "style"> & {
   size?: "small" | "medium" | "large";
   style?: StyleProp<ViewStyle>;
   loading?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
 };
 
 export function ThemedButton({
@@ -26,6 +29,7 @@ export function ThemedButton({
   style,
   disabled,
   loading = false,
+  icon,
   ...rest
 }: ThemedButtonProps) {
   const tintColor = useThemeColor(
@@ -86,16 +90,26 @@ export function ThemedButton({
           style={styles.loader}
         />
       ) : (
-        <ThemedText
-          style={[
-            styles.text,
-            size === "small" && styles.smallText,
-            size === "large" && styles.largeText,
-            { color: getTextColor() },
-          ]}
-        >
-          {title}
-        </ThemedText>
+        <View style={styles.content}>
+          {icon && (
+            <Ionicons
+              name={icon}
+              size={size === "small" ? 16 : 20}
+              color={getTextColor()}
+              style={styles.icon}
+            />
+          )}
+          <ThemedText
+            style={[
+              styles.text,
+              size === "small" && styles.smallText,
+              size === "large" && styles.largeText,
+              { color: getTextColor() },
+            ]}
+          >
+            {title}
+          </ThemedText>
+        </View>
       )}
     </Pressable>
   );
@@ -106,6 +120,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 8,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    marginRight: 6,
   },
   small: {
     paddingVertical: 4,
@@ -130,7 +152,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   smallText: {
-    fontSize: 14,
+    fontSize: 15,
   },
   largeText: {
     fontSize: 18,
