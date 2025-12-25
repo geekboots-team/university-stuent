@@ -6,6 +6,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
+import { AppliedClubs, AppliedUniversity } from "@/models/student.model";
 import { Support, SupportForm, SupportMessage } from "@/models/support.model";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
@@ -63,68 +64,48 @@ export default function SupportScreen() {
   const [formData, setFormData] = useState<SupportForm>(initialFormState);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [studentUniversities, setStudentUniversities] = useState<
-    { id: string; name: string }[]
+    AppliedUniversity[]
   >([]);
-  const [studentClubs, setStudentClubs] = useState<
-    { id: string; name: string }[]
-  >([]);
+  const [studentClubs, setStudentClubs] = useState<AppliedClubs[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
   // Fetch student's universities
-  const fetchStudentUniversities = useCallback(async () => {
+  const fetchUniversities = useCallback(async () => {
     try {
-      const { data: appliedData, error: appliedError } = await supabase
+      const { data, error } = await supabase
         .from("applied_universities")
-        .select("university_id")
+        .select("*, university(name)")
         .eq("user_id", studentId!)
         .eq("status", "active");
 
-      if (appliedError) throw appliedError;
-
-      if (appliedData && appliedData.length > 0) {
-        const universityIds = appliedData.map(
-          (item: { university_id: string }) => item.university_id
-        );
-        const { data: uniData, error: uniError } = await supabase
-          .from("university")
-          .select("id, name")
-          .in("id", universityIds);
-
-        if (uniError) throw uniError;
-        setStudentUniversities(uniData || []);
+      if (data && !error) {
+        setStudentUniversities(data);
+      } else if (error) {
+        return;
       }
     } catch {
-      console.error("Error fetching student universities");
+      Alert.alert("Error", "Error fetching universities!");
     }
   }, [studentId]);
 
   // Fetch student's clubs
-  const fetchStudentClubs = useCallback(async () => {
+  const fetchClubs = useCallback(async () => {
     try {
-      const { data: memberData, error: memberError } = await supabase
+      const { data, error } = await supabase
         .from("applied_clubs")
-        .select("club_id")
+        .select("*, clubs(name)")
         .eq("user_id", studentId!)
         .eq("status", "active");
 
-      if (memberError) throw memberError;
-
-      if (memberData && memberData.length > 0) {
-        const clubIds = memberData.map(
-          (item: { club_id: string }) => item.club_id
-        );
-        const { data: clubData, error: clubError } = await supabase
-          .from("clubs")
-          .select("id, name")
-          .in("id", clubIds);
-
-        if (clubError) throw clubError;
-        setStudentClubs(clubData || []);
+      if (data && !error) {
+        setStudentClubs(data);
+      } else if (error) {
+        return;
       }
     } catch {
-      console.error("Error fetching student clubs");
+      Alert.alert("Error", "Error fetching clubs!");
     }
   }, [studentId]);
 
@@ -132,7 +113,7 @@ export default function SupportScreen() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("support")
+        .from("support_tickets")
         .select("*")
         .eq("user_id", studentId!)
         .order("created_at", { ascending: false });
@@ -164,10 +145,10 @@ export default function SupportScreen() {
   useEffect(() => {
     if (studentTkn) {
       fetchTickets();
-      fetchStudentUniversities();
-      fetchStudentClubs();
+      fetchUniversities();
+      fetchClubs();
     }
-  }, [studentTkn, fetchTickets, fetchStudentUniversities, fetchStudentClubs]);
+  }, [studentTkn, fetchTickets, fetchUniversities, fetchClubs]);
 
   const validateForm = (): boolean => {
     const errors: { [key: string]: string } = {};
@@ -214,7 +195,7 @@ export default function SupportScreen() {
       };
 
       const { data: ticketResult, error: ticketError } = await supabase
-        .from("support")
+        .from("support_tickets")
         .insert(ticketData)
         .select()
         .single();
@@ -556,10 +537,12 @@ export default function SupportScreen() {
               <ThemedDropdown
                 label="University"
                 placeholder="Select university"
-                options={studentUniversities.map((uni) => ({
-                  label: uni.name,
-                  value: uni.id,
-                }))}
+                options={studentUniversities
+                  .filter((uni) => uni.id !== undefined)
+                  .map((uni) => ({
+                    label: uni.university?.name || "Unnamed University",
+                    value: uni.id!,
+                  }))}
                 value={formData.university_id || ""}
                 onSelect={(value) =>
                   setFormData({ ...formData, university_id: value })
@@ -572,10 +555,12 @@ export default function SupportScreen() {
               <ThemedDropdown
                 label="Club"
                 placeholder="Select club"
-                options={studentClubs.map((club) => ({
-                  label: club.name,
-                  value: club.id,
-                }))}
+                options={studentClubs
+                  .filter((club) => club.id !== undefined)
+                  .map((club) => ({
+                    label: club.clubs?.name || "Unnamed Club",
+                    value: club.id!,
+                  }))}
                 value={formData.club_id || ""}
                 onSelect={(value) =>
                   setFormData({ ...formData, club_id: value })
