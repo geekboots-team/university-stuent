@@ -189,10 +189,22 @@ export default function AccommodationScreen() {
   ]);
 
   useEffect(() => {
+    if (studentTkn && activeTab === "all") {
+      fetchAccommodations();
+    }
+  }, [studentTkn, activeTab, fetchAccommodations]);
+
+  useEffect(() => {
     if (studentTkn && activeTab === "my") {
       fetchMyAccommodations();
     }
   }, [studentTkn, activeTab, fetchMyAccommodations]);
+
+  useEffect(() => {
+    if (studentTkn && activeTab === "accepted") {
+      fetchAcceptAccommodations();
+    }
+  }, [studentTkn, activeTab, fetchAcceptAccommodations]);
 
   const validateForm = (): boolean => {
     const errors: { [key: string]: string } = {};

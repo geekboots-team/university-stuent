@@ -734,7 +734,6 @@ export default function SupportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
   },
   centerContainer: {
     flex: 1,
@@ -949,7 +948,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: Platform.OS === "ios" ? 10 : 20,
+    bottom: Platform.OS === "ios" ? 10 : 10,
     width: 56,
     height: 56,
     borderRadius: 28,

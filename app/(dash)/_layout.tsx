@@ -277,6 +277,8 @@ export default function TabLayout() {
   useEffect(() => {
     if (studentStatus === "approved") {
       setProfileModalVisible(true);
+    } else {
+      setProfileModalVisible(false);
     }
   }, [studentStatus]);
 

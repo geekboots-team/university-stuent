@@ -17,16 +17,26 @@ export default function GroupIndividualChatScreen() {
     groupName: string;
     senderType: string;
   }>();
-  const groupId = params.groupId || "1";
-  const senderType = params.senderType || "student";
+  // const groupId = params.groupId || "1";
+  // const senderType = params.senderType || "student";
   const colorScheme = useColorScheme();
-  const { loading, setLoading, studentId } = useAppContext();
+  const { setLoading, studentId } = useAppContext();
   const [group, setGroup] = useState<Groups>();
+  const [groupId, setGroupId] = useState<string>();
+  const [groupName, setGroupName] = useState<string>();
+  const [senderType, setSenderType] = useState<string>();
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [participantCount, setParticipantCount] = useState<number>(0);
 
+  useEffect(() => {
+    if (params.groupId) setGroupId(params.groupId);
+    if (params.groupName) setGroupName(params.groupName);
+    if (params.senderType) setSenderType(params.senderType);
+  }, [params]);
+
   const handleBack = useCallback(() => {
     router.push("/(dash)/group-chat");
+    setMessages([]);
   }, [router]);
 
   const fetchGroup = useCallback(async () => {
@@ -54,10 +64,11 @@ export default function GroupIndividualChatScreen() {
 
   const fetchParticipantCount = useCallback(async () => {
     try {
+      if (!group) return;
       const { count, error } = await supabase
         .from("group_participants")
         .select("*", { count: "exact", head: true })
-        .eq("group_id", groupId);
+        .eq("group_id", group.id);
 
       if (error) {
         throw error;
@@ -67,7 +78,7 @@ export default function GroupIndividualChatScreen() {
     } catch {
       Alert.alert("Error", "Failed to fetch participant count");
     }
-  }, [groupId]);
+  }, [group]);
 
   useEffect(() => {
     if (group) {
@@ -83,7 +94,7 @@ export default function GroupIndividualChatScreen() {
       const { data, error } = await supabase
         .from("group_messages")
         .select("*, sender:students(first_name, last_name)")
-        .eq("group_id", groupId)
+        .eq("group_id", group.id)
         .order("created_at", { ascending: true })
         .range(0, 99);
 
@@ -97,20 +108,21 @@ export default function GroupIndividualChatScreen() {
     } finally {
       setLoading(false);
     }
-  }, [group, groupId, setLoading]);
+  }, [group, setLoading]);
   useEffect(() => {
+    if (!group) return;
     fetchMessages();
 
     // Subscribe to realtime changes
     const channel = supabase
-      .channel(`group_messages-${groupId}`)
+      .channel(`group_messages-${group.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "group_messages",
-          filter: `group_id=eq.${groupId}`,
+          filter: `group_id=eq.${group.id}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
@@ -146,33 +158,37 @@ export default function GroupIndividualChatScreen() {
     return () => {
       channel.unsubscribe();
     };
-  }, [fetchMessages, groupId]);
+  }, [fetchMessages, group]);
 
-  const handleSendMessage = useCallback(async (text: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from("group_messages")
-        .insert({
-          group_id: groupId,
-          sender_id: senderType === "student" ? studentId : null,
-          sender_type: senderType,
-          club_id: senderType === "club" ? studentId : null,
-          admin_id: senderType === "admin" ? studentId : null,
-          moderator_id: senderType === "moderator" ? studentId : null,
-          message: text,
-        })
-        .select();
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      if (!group || !studentId || !senderType) return;
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from("group_messages")
+          .insert({
+            group_id: group.id,
+            sender_id: senderType === "student" ? studentId : null,
+            sender_type: senderType,
+            club_id: senderType === "club" ? studentId : null,
+            admin_id: senderType === "admin" ? studentId : null,
+            moderator_id: senderType === "moderator" ? studentId : null,
+            message: text,
+          })
+          .select();
 
-      if (error) {
+        if (error) {
+          Alert.alert("Error", "Error sending message");
+        }
+      } catch {
         Alert.alert("Error", "Error sending message");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      Alert.alert("Error", "Error sending message");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [group, studentId, senderType, setLoading]
+  );
 
   return (
     <>
@@ -196,7 +212,7 @@ export default function GroupIndividualChatScreen() {
                 lightColor={Colors.light.tint}
                 darkColor={Colors.dark.tint}
               >
-                {group?.name || params.groupName}
+                {group?.name || groupName}
               </ThemedText>
               <ThemedText
                 style={styles.headerSubtitle}
