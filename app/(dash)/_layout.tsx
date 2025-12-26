@@ -1,6 +1,13 @@
 import { Tabs, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -246,7 +253,7 @@ const headerStyles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 150,
+    bottom: Platform.OS === "ios" ? 160 : 150,
     width: 56,
     height: 56,
     borderRadius: 28,

@@ -38,6 +38,9 @@ export default function AccommodationScreen() {
   const { studentTkn, studentId, loading, setLoading } = useAppContext();
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [myAccommodations, setMyAccommodations] = useState<Accommodation[]>([]);
+  const [acceptedAccommodations, setAcceptedAccommodations] = useState<
+    Accommodation[]
+  >([]);
   const [selectedAccommodation, setSelectedAccommodation] =
     useState<Accommodation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -149,12 +152,41 @@ export default function AccommodationScreen() {
     }
   }, [setLoading, studentId]);
 
+  const fetchAcceptAccommodations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("accommodations")
+        .select(
+          "* , university(name), creator:students!accommodations_user_id_fkey(first_name, last_name), acceptor:students!accommodations_accepted_by_fkey(first_name, last_name)"
+        )
+        .eq("accepted_by", studentId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        Alert.alert("Error", "Failed to fetch accommodations");
+      } else {
+        setAcceptedAccommodations(data || []);
+      }
+    } catch {
+      Alert.alert("Error", "Error fetching accommodations");
+    } finally {
+      setLoading(false);
+    }
+  }, [studentId, setLoading]);
+
   useEffect(() => {
     if (studentTkn) {
       fetchAccommodations();
       fetchStudentUniversities();
+      fetchAcceptAccommodations();
     }
-  }, [studentTkn, fetchAccommodations, fetchStudentUniversities]);
+  }, [
+    studentTkn,
+    fetchAccommodations,
+    fetchStudentUniversities,
+    fetchAcceptAccommodations,
+  ]);
 
   useEffect(() => {
     if (studentTkn && activeTab === "my") {
@@ -580,7 +612,7 @@ export default function AccommodationScreen() {
       ? accommodations
       : activeTab === "my"
       ? myAccommodations
-      : accommodations.filter((acc) => acc.status === "accepted");
+      : acceptedAccommodations;
 
   return (
     <ThemedView style={styles.container}>

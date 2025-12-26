@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 5,
   },
   loadingContainer: {
     flex: 1,
