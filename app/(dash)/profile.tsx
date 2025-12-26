@@ -11,6 +11,7 @@ import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -74,6 +75,7 @@ export default function ProfileScreen() {
   const [updatingUniversity, setUpdatingUniversity] = useState(false);
 
   const colorScheme = useColorScheme();
+  const router = useRouter();
 
   const fetchUniversities = useCallback(async () => {
     try {
@@ -484,6 +486,11 @@ export default function ProfileScreen() {
     }
   };
 
+  const logoutUser = () => {
+    logoutStudent();
+    router.push("/");
+  };
+
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
@@ -578,7 +585,7 @@ export default function ProfileScreen() {
 
                   <ThemedButton
                     title="Logout"
-                    onPress={logoutStudent}
+                    onPress={logoutUser}
                     variant="outline"
                     size="small"
                   />

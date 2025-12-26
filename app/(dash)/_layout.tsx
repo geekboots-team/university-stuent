@@ -4,6 +4,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
+import { ProfileModal } from "@/components/profile-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
@@ -263,6 +264,15 @@ const headerStyles = StyleSheet.create({
 
 export default function TabLayout() {
   const router = useRouter();
+  const { studentStatus } = useAppContext();
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (studentStatus === "approved") {
+      setProfileModalVisible(true);
+    }
+  }, [studentStatus]);
+
   return (
     <>
       <Tabs
@@ -391,6 +401,10 @@ export default function TabLayout() {
       >
         <Ionicons name="document-text-outline" size={28} color="#fff" />
       </TouchableOpacity>
+      <ProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </>
   );
 }

@@ -8,7 +8,7 @@ import { uploadProfileImageFromUri } from "@/lib/fileUpload";
 import { supabase } from "@/lib/supabase";
 import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -68,6 +68,13 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const [addUniversityModalVisible, setAddUniversityModalVisible] =
     useState(false);
   const [addingUniversity, setAddingUniversity] = useState(false);
+
+  // Edit Applied University
+  const [editingAppliedUniversity, setEditingAppliedUniversity] =
+    useState<AppliedUniversity | null>(null);
+  const [editUniversityModalVisible, setEditUniversityModalVisible] =
+    useState(false);
+  const [updatingUniversity, setUpdatingUniversity] = useState(false);
 
   const colorScheme = useColorScheme();
 
@@ -279,6 +286,75 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
         },
       ]
     );
+  };
+
+  const handleEditUniversity = async (appliedUni: AppliedUniversity) => {
+    setEditingAppliedUniversity(appliedUni);
+    setSelectedUniversity(appliedUni.university_id);
+    // Fetch courses for the university before setting the course
+    await fetchCourses(appliedUni.university_id);
+    setSelectedCourse(appliedUni.course_id);
+    setEditUniversityModalVisible(true);
+  };
+
+  const handleUpdateUniversity = async () => {
+    if (!editingAppliedUniversity) return;
+
+    if (!selectedUniversity) {
+      Alert.alert("Error", "Please select a university");
+      return;
+    }
+
+    // Check if already applied to this combination (excluding current)
+    const alreadyApplied = appliedUniversities.some(
+      (au) =>
+        au.id !== editingAppliedUniversity.id &&
+        au.university_id === selectedUniversity &&
+        au.course_id === (selectedCourse || null)
+    );
+
+    if (alreadyApplied) {
+      Alert.alert(
+        "Error",
+        "You have already applied to this university/course combination"
+      );
+      return;
+    }
+
+    try {
+      setUpdatingUniversity(true);
+      const { error } = await supabase
+        .from("applied_universities")
+        .update({
+          university_id: selectedUniversity,
+          course_id: selectedCourse || null,
+        })
+        .eq("id", editingAppliedUniversity.id);
+
+      if (error) {
+        Alert.alert("Error", "Failed to update university");
+        return;
+      }
+
+      await fetchAppliedUniversities();
+      setSelectedUniversity("");
+      setSelectedCourse("");
+      setEditingAppliedUniversity(null);
+      setEditUniversityModalVisible(false);
+      Alert.alert("Success", "University updated successfully!");
+    } catch {
+      Alert.alert("Error", "An unexpected error occurred");
+    } finally {
+      setUpdatingUniversity(false);
+    }
+  };
+
+  const closeEditUniversityModal = () => {
+    setEditUniversityModalVisible(false);
+    setSelectedUniversity("");
+    setSelectedCourse("");
+    setCourses([]);
+    setEditingAppliedUniversity(null);
   };
 
   const validateForm = () => {
@@ -774,35 +850,69 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                                 {au.courses.name}
                               </ThemedText>
                             )}
-                            <ThemedText
-                              style={[
-                                styles.appliedStatus,
-                                {
-                                  color:
-                                    au.status === "active"
-                                      ? "#4CAF50"
-                                      : au.status === "rejected"
-                                      ? "#f44336"
-                                      : "#FF9800",
-                                },
-                              ]}
-                            >
-                              {au.status.charAt(0).toUpperCase() +
-                                au.status.slice(1)}
-                            </ThemedText>
+                            <View style={styles.statusContainer}>
+                              <Ionicons
+                                name={
+                                  au.status === "active"
+                                    ? "checkmark-circle"
+                                    : au.status === "rejected"
+                                    ? "close-circle"
+                                    : "time"
+                                }
+                                size={14}
+                                color={
+                                  au.status === "active"
+                                    ? "#4CAF50"
+                                    : au.status === "rejected"
+                                    ? "#f44336"
+                                    : "#FF9800"
+                                }
+                              />
+                              <ThemedText
+                                style={[
+                                  styles.appliedStatus,
+                                  {
+                                    color:
+                                      au.status === "active"
+                                        ? "#4CAF50"
+                                        : au.status === "rejected"
+                                        ? "#f44336"
+                                        : "#FF9800",
+                                  },
+                                ]}
+                              >
+                                {au.status.charAt(0).toUpperCase() +
+                                  au.status.slice(1)}
+                              </ThemedText>
+                            </View>
                           </View>
-                          <TouchableOpacity
-                            onPress={() =>
-                              au.id && handleRemoveUniversity(au.id)
-                            }
-                            style={styles.removeButton}
-                          >
-                            <Ionicons
-                              name="close-circle"
-                              size={24}
-                              color="#f44336"
-                            />
-                          </TouchableOpacity>
+
+                          <View style={styles.actionButtons}>
+                            <TouchableOpacity
+                              onPress={() => handleEditUniversity(au)}
+                              style={styles.editButton}
+                            >
+                              <MaterialIcons
+                                name="edit"
+                                size={20}
+                                color="#842d1c"
+                              />
+                            </TouchableOpacity>
+                            {au.status !== "active" && (
+                              <TouchableOpacity
+                                onPress={() =>
+                                  au.id && handleRemoveUniversity(au.id)
+                                }
+                                style={styles.removeButton}
+                              >
+                                <Ionicons
+                                  name="close-circle"
+                                  size={24}
+                                  color="#f44336"
+                                />
+                              </TouchableOpacity>
+                            )}
+                          </View>
                         </View>
                       ))}
                     </View>
@@ -811,7 +921,8 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                   {/* Add new university */}
                   <View style={styles.addUniversityContainer}>
                     <ThemedButton
-                      title="+ Add University"
+                      title="Add University"
+                      icon="add-circle-outline"
                       onPress={openAddUniversityModal}
                       variant="primary"
                       size="small"
@@ -899,6 +1010,80 @@ export function ProfileModal({ visible, onClose }: ProfileModalProps) {
                     title={addingUniversity ? "Adding..." : "Add"}
                     onPress={handleAddUniversity}
                     loading={addingUniversity}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit University Popup Modal */}
+      <Modal
+        visible={editUniversityModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={closeEditUniversityModal}
+      >
+        <View style={styles.popupOverlay}>
+          <View
+            style={[
+              styles.popupContainer,
+              { backgroundColor: Colors[colorScheme ?? "light"].background },
+            ]}
+          >
+            <View style={styles.popupHeader}>
+              <ThemedText style={styles.popupTitle}>Edit University</ThemedText>
+              <TouchableOpacity
+                onPress={closeEditUniversityModal}
+                style={styles.popupCloseButton}
+              >
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={Colors[colorScheme ?? "light"].text}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.popupContent}>
+              <ThemedDropdown
+                label="University *"
+                placeholder="Select university"
+                options={universities.map((uni) => ({
+                  label: uni.name,
+                  value: uni.id,
+                }))}
+                value={selectedUniversity}
+                onSelect={setSelectedUniversity}
+              />
+
+              {selectedUniversity && (
+                <ThemedDropdown
+                  label="Course (Optional)"
+                  placeholder="Select course"
+                  options={courses.map((course) => ({
+                    label: course.name,
+                    value: course.id,
+                  }))}
+                  value={selectedCourse}
+                  onSelect={setSelectedCourse}
+                />
+              )}
+
+              <View style={styles.popupButtons}>
+                <View style={styles.popupButtonWrapper}>
+                  <ThemedButton
+                    title="Cancel"
+                    onPress={closeEditUniversityModal}
+                    variant="outline"
+                  />
+                </View>
+                <View style={styles.popupButtonWrapper}>
+                  <ThemedButton
+                    title={updatingUniversity ? "Updating..." : "Update"}
+                    onPress={handleUpdateUniversity}
+                    loading={updatingUniversity}
                   />
                 </View>
               </View>
@@ -1049,19 +1234,26 @@ const styles = StyleSheet.create({
   appliedStatus: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 4,
   },
   removeButton: {
     padding: 4,
   },
+  actionButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  editButton: {
+    padding: 4,
+  },
   addUniversityContainer: {
     marginTop: 4,
-    alignItems: "flex-end",
-  },
-  addUniversityLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 12,
+    alignItems: "flex-start",
   },
   popupOverlay: {
     flex: 1,
