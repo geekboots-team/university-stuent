@@ -7,7 +7,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
-import { University } from "@/models/university.model";
+import { Course, University } from "@/models/university.model";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -31,6 +31,8 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [university, setUniversity] = useState<string>("");
   const [universities, setUniversities] = useState<University[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -67,6 +69,34 @@ export default function RegisterScreen() {
   useEffect(() => {
     fetchUniversities();
   }, [fetchUniversities]);
+
+  const fetchCourses = useCallback(async (universityId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("university_id", universityId)
+        .order("name", { ascending: true });
+
+      if (error) {
+        return;
+      }
+
+      if (data) {
+        setCourses(data);
+      }
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (university) {
+      fetchCourses(university);
+    } else {
+      setCourses([]);
+    }
+  }, [university, fetchCourses]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -174,7 +204,7 @@ export default function RegisterScreen() {
           .insert({
             user_id: authData.user.id, // Use Auth user ID as primary key
             university_id: university,
-            course_id: null,
+            course_id: selectedCourse || null,
             status: "pending",
           });
 
@@ -282,6 +312,19 @@ export default function RegisterScreen() {
               onSelect={setUniversity}
               error={errors.university}
             />
+
+            {university && (
+              <ThemedDropdown
+                label="Course"
+                placeholder="Select course"
+                options={courses.map((course) => ({
+                  label: course.name,
+                  value: course.id,
+                }))}
+                value={selectedCourse}
+                onSelect={setSelectedCourse}
+              />
+            )}
 
             <ThemedInput
               label="Password"
