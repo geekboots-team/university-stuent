@@ -41,6 +41,7 @@ export default function GroupIndividualChatScreen() {
 
   const fetchGroup = useCallback(async () => {
     try {
+      if (!groupId) return;
       const { data, error } = await supabase
         .from("groups")
         .select("*, university(name), courses(name), clubs(name)")
@@ -48,7 +49,6 @@ export default function GroupIndividualChatScreen() {
         .single();
 
       if (error || !data) {
-        Alert.alert("Error", "Failed to fetch group details");
         handleBack();
       }
 
@@ -99,7 +99,7 @@ export default function GroupIndividualChatScreen() {
         .range(0, 99);
 
       if (error) {
-        throw error;
+        return;
       }
 
       setMessages(data || []);
@@ -109,6 +109,8 @@ export default function GroupIndividualChatScreen() {
       setLoading(false);
     }
   }, [group, setLoading]);
+
+  
   useEffect(() => {
     if (!group) return;
     fetchMessages();

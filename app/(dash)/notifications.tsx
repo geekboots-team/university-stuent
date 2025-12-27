@@ -358,9 +358,7 @@ export default function NotificationsScreen() {
               key={filter}
               style={[
                 styles.filterTab,
-                activeFilter === filter && {
-                  backgroundColor: Colors.light.tint,
-                },
+                activeFilter === filter && styles.activeTab,
               ]}
               onPress={() => setActiveFilter(filter)}
             >
@@ -442,29 +440,33 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 20,
   },
   filterContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0, 0, 0, 0.1)",
   },
   filterTabs: {
     flexDirection: "row",
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
     padding: 4,
   },
   filterTab: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: 6,
+    borderRadius: 8,
     alignItems: "center",
+  },
+  activeTab: {
+    backgroundColor: Colors.light.tint,
   },
   filterText: {
     fontSize: 13,
     fontWeight: "500",
+    color: "#666",
   },
   activeFilterText: {
     color: "#fff",

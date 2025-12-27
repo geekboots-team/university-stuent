@@ -136,6 +136,7 @@ export default function GroupChatScreen() {
   }, [studentCourses, fetchAvailableCourses]);
 
   const fetchGroups = useCallback(async () => {
+    if (studentUniversity.length === 0) return;
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -146,7 +147,6 @@ export default function GroupChatScreen() {
         .order("name", { ascending: true });
 
       if (error) {
-        Alert.alert("Error", "Failed to fetch groups");
         return;
       }
 
