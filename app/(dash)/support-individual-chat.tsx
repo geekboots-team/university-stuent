@@ -1,4 +1,4 @@
-import { ThemedInput } from "@/components/themed-input";
+import SupportChatWindow from "@/components/support-chat-window";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
@@ -11,7 +11,6 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
-  FlatList,
   Platform,
   StyleSheet,
   TouchableOpacity,
@@ -191,23 +190,6 @@ export default function SupportIndividualChatScreen() {
     }
   };
 
-  const renderMessageItem = ({ item }: { item: SupportMessage }) => {
-    const isStudent = item.sender_role === "student";
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isStudent ? styles.studentMessage : styles.supportMessage,
-        ]}
-      >
-        <ThemedText style={styles.messageText}>{item.message}</ThemedText>
-        <ThemedText style={styles.messageTime}>
-          {new Date(item.created_at).toLocaleString()}
-        </ThemedText>
-      </View>
-    );
-  };
-
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen
@@ -287,49 +269,12 @@ export default function SupportIndividualChatScreen() {
               </View>
             </View>
           </View>
-
-          <FlatList
-            data={messages}
-            renderItem={renderMessageItem}
-            keyExtractor={(item) => item.id}
-            style={styles.messagesList}
-            contentContainerStyle={styles.messagesContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <ThemedText style={styles.noMessages}>No messages yet</ThemedText>
-            }
+          <SupportChatWindow
+            messages={messages}
+            currentUserId={studentId!}
+            onSendMessage={handleSendMessage}
+            inputPlaceholder="Type your message..."
           />
-
-          {ticket.status !== "closed" && ticket.status !== "resolved" && (
-            <View style={styles.inputContainer}>
-              <ThemedInput
-                placeholder="Type your message..."
-                value={newMessage}
-                onChangeText={setNewMessage}
-                style={styles.messageInput}
-                multiline
-              />
-              <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  (!newMessage.trim() || sendingMessage) &&
-                    styles.sendButtonDisabled,
-                ]}
-                onPress={handleSendMessage}
-                disabled={sendingMessage || !newMessage.trim()}
-              >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={
-                    sendingMessage || !newMessage.trim()
-                      ? "#ccc"
-                      : Colors.light.tint
-                  }
-                />
-              </TouchableOpacity>
-            </View>
-          )}
         </>
       )}
     </ThemedView>

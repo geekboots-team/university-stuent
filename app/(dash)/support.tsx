@@ -177,6 +177,8 @@ export default function SupportScreen() {
         club_id: formData.request_to === "club" ? formData.club_id : null,
       };
 
+      
+
       const { data: ticketResult, error: ticketError } = await supabase
         .from("support_tickets")
         .insert(ticketData)
