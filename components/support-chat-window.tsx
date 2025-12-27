@@ -16,12 +16,11 @@ import {
 } from "react-native";
 
 export interface SupportChatWindowProps {
+  status: "open" | "in_progress" | "pending_user" | "resolved" | "closed";
   /** Messages to display */
   messages: SupportMessage[];
   /** Current user's ID to determine message alignment */
   currentUserId: string;
-  /** Whether this is a group chat (shows sender names on received messages) */
-  isGroupChat?: boolean;
   /** Callback when send button is pressed */
   onSendMessage: (text: string) => void;
   /** Placeholder text for input */
@@ -31,9 +30,9 @@ export interface SupportChatWindowProps {
 }
 
 export function SupportChatWindow({
+  status,
   messages,
   currentUserId,
-  isGroupChat = false,
   onSendMessage,
   inputPlaceholder = "Type a message...",
   isLoading = false,
@@ -175,41 +174,45 @@ export function SupportChatWindow({
       />
 
       {/* Input Area with Animated Bottom Padding */}
-      <Animated.View
-        style={[
-          styles.inputContainer,
-          {
-            paddingBottom: Animated.add(keyboardHeight, 10),
-          },
-        ]}
-      >
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder={inputPlaceholder}
-            placeholderTextColor="rgba(132, 45, 28, 0.5)"
-            multiline
-            maxLength={1000}
-          />
-          <TouchableOpacity
-            onPress={handleSend}
-            style={[
-              styles.sendButton,
-              !inputText.trim() && styles.sendButtonDisabled,
-            ]}
-            activeOpacity={0.7}
-            disabled={!inputText.trim()}
-          >
-            <Ionicons
-              name="send"
-              size={20}
-              color={inputText.trim() ? "#fff" : "rgba(255,255,255,0.5)"}
+      {status !== "closed" && status !== "resolved" ? (
+        <Animated.View
+          style={[
+            styles.inputContainer,
+            {
+              paddingBottom: Animated.add(keyboardHeight, 10),
+            },
+          ]}
+        >
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder={inputPlaceholder}
+              placeholderTextColor="rgba(132, 45, 28, 0.5)"
+              multiline
+              maxLength={1000}
             />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+            <TouchableOpacity
+              onPress={handleSend}
+              style={[
+                styles.sendButton,
+                !inputText.trim() && styles.sendButtonDisabled,
+              ]}
+              activeOpacity={0.7}
+              disabled={!inputText.trim()}
+            >
+              <Ionicons
+                name="send"
+                size={20}
+                color={inputText.trim() ? "#fff" : "rgba(255,255,255,0.5)"}
+              />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      ) : (
+        <ThemedText style={styles.ticketClosedText}>Ticket {status}</ThemedText>
+      )}
     </ThemedView>
   );
 }
@@ -320,6 +323,12 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: "rgba(132, 45, 28, 0.4)",
+  },
+  ticketClosedText: {
+    textAlign: "center",
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: "rgba(255, 229, 220, 0.5)",
   },
 });
 

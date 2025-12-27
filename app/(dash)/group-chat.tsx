@@ -32,11 +32,48 @@ export default function GroupChatScreen() {
     { id: string; name: string; university_id: string }[]
   >([]);
 
-  const handleGroupPress = (groupId: string, groupName: string) => {
-    router.push({
-      pathname: "/(dash)/group-individual-chat",
-      params: { groupId, groupName, senderType: studentRole },
-    });
+  const handleGroupPress = async (groupId: string, groupName: string) => {
+    try {
+      // Check if the student is already in the group
+      const { data: existingParticipant, error: checkError } = await supabase
+        .from("group_participants")
+        .select("id")
+        .eq("group_id", groupId)
+        .eq("user_id", studentId)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 is "not found", which is expected if not exists
+        throw checkError;
+      }
+
+      if (existingParticipant) {
+        router.push({
+          pathname: "/(dash)/group-individual-chat",
+          params: { groupId, groupName },
+        });
+        return;
+      }
+
+      // If not exists, add the student to the group
+      const { error: error } = await supabase
+        .from("group_participants")
+        .insert({
+          group_id: groupId,
+          user_id: studentId,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      router.push({
+        pathname: "/(dash)/group-individual-chat",
+        params: { groupId, groupName },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to join group");
+    }
   };
 
   const fetchAvailableUniversities = useCallback(async () => {

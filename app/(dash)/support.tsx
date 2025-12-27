@@ -177,7 +177,10 @@ export default function SupportScreen() {
         club_id: formData.request_to === "club" ? formData.club_id : null,
       };
 
-      
+      Alert.alert(
+        "Debug",
+        "Creating ticket with data: " + JSON.stringify(ticketData)
+      );
 
       const { data: ticketResult, error: ticketError } = await supabase
         .from("support_tickets")
@@ -366,7 +369,7 @@ export default function SupportScreen() {
                   .filter((uni) => uni.id !== undefined)
                   .map((uni) => ({
                     label: uni.university?.name || "Unnamed University",
-                    value: uni.id!,
+                    value: uni.university_id!,
                   }))}
                 value={formData.university_id || ""}
                 onSelect={(value) =>
@@ -384,7 +387,7 @@ export default function SupportScreen() {
                   .filter((club) => club.id !== undefined)
                   .map((club) => ({
                     label: club.clubs?.name || "Unnamed Club",
-                    value: club.id!,
+                    value: club.club_id!,
                   }))}
                 value={formData.club_id || ""}
                 onSelect={(value) =>
