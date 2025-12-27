@@ -11,7 +11,7 @@ import { AppliedUniversity, Student } from "@/models/student.model";
 import { Course, University } from "@/models/university.model";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -172,18 +172,20 @@ export default function ProfileScreen() {
     }
   }, [studentId]);
 
-  useEffect(() => {
-    if (studentId) {
-      fetchStudentData();
-      fetchUniversities();
-      fetchAppliedUniversities();
-    }
-  }, [
-    studentId,
-    fetchStudentData,
-    fetchUniversities,
-    fetchAppliedUniversities,
-  ]);
+  useFocusEffect(
+    useCallback(() => {
+      if (studentId) {
+        fetchStudentData();
+        fetchUniversities();
+        fetchAppliedUniversities();
+      }
+    }, [
+      studentId,
+      fetchStudentData,
+      fetchUniversities,
+      fetchAppliedUniversities,
+    ])
+  );
 
   useEffect(() => {
     if (selectedUniversity) {

@@ -1,13 +1,13 @@
 import { ChatWindow } from "@/components/chat-window";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { supabase } from "@/lib/supabase";
 import { Messages } from "@/models/conversation.model";
+import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Platform, StyleSheet, TouchableOpacity } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function IndividualChatScreen() {
   const { studentTkn, setLoading, studentId } = useAppContext();
@@ -81,23 +81,38 @@ export default function IndividualChatScreen() {
     router.push("/(dash)/chat");
   }, [router]);
 
-  const handleSendMessage = useCallback((text: string) => {
-    // const newMessage: Messages = {
-    //   id: Date.now().toString(),
-    //   message: text,
-    //   sender: {
-    //     id: "current-user",
-    //     first_name: "Current",
-    //     last_name: "User",
-    //   },
-    //   created_at: new Date().toISOString(),
-    // };
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      try {
+        setLoading(true);
+        const { error } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: chatId,
+            sender_id: studentId,
+            message: text,
+          })
+          .select();
 
-    // setMessages((prev) => [...prev, newMessage]);
-
-    // TODO: Send message to backend API
-    console.log("Sending message:", text);
-  }, []);
+        if (error) {
+          Alert.alert("Error", "Error sending message!");
+        } else {
+          const { error: conError } = await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", chatId);
+          if (conError) {
+            Alert.alert("Error", "Error updating conversation!");
+          }
+        }
+      } catch {
+        Alert.alert("Error", "Error sending message!");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [chatId, studentId, setLoading]
+  );
 
   return (
     <>
@@ -112,8 +127,8 @@ export default function IndividualChatScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <IconSymbol
-                name="chevron.left"
+              <Ionicons
+                name="chevron-back"
                 size={28}
                 color={Colors[colorScheme ?? "light"].tint}
               />
@@ -136,16 +151,5 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 4,
     marginRight: 8,
-  },
-  headerTitle: {
-    alignItems: Platform.OS === "ios" ? "center" : "flex-start",
-  },
-  headerTitleText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    opacity: 0.8,
   },
 });

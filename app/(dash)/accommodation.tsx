@@ -1,3 +1,4 @@
+import ChatNow from "@/components/start-chat";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedDropdown } from "@/components/themed-dropdown";
 import { ThemedInput } from "@/components/themed-input";
@@ -8,6 +9,7 @@ import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Accommodation, AccommodationForm } from "@/models/accommodation.model";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -37,6 +39,7 @@ const initialFormState: AccommodationForm = {
 
 export default function AccommodationScreen() {
   const { studentTkn, studentId, loading, setLoading } = useAppContext();
+  const router = useRouter();
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [myAccommodations, setMyAccommodations] = useState<Accommodation[]>([]);
   const [acceptedAccommodations, setAcceptedAccommodations] = useState<
@@ -333,6 +336,45 @@ export default function AccommodationScreen() {
     }
   };
 
+  const handleCancelAccommodation = async (accommodationId: string) => {
+    Alert.alert(
+      "Cancel Accommodation",
+      "Are you sure you want to reject/cancel this accommodation?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const { error } = await supabase
+                .from("accommodations")
+                .update({
+                  accepted_by: null,
+                  status: "active",
+                })
+                .eq("id", accommodationId);
+
+              if (error) throw error;
+
+              Alert.alert("Success", "Accommodation cancelled successfully!");
+              setModalVisible(false);
+              fetchAccommodations();
+              if (activeTab === "accepted") {
+                fetchAcceptAccommodations();
+              }
+            } catch {
+              Alert.alert("Error", "Failed to cancel accommodation");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderAccommodationItem = ({ item }: { item: Accommodation }) => (
     <TouchableOpacity
       style={styles.accommodationItem}
@@ -478,6 +520,50 @@ export default function AccommodationScreen() {
                       />
                       <ThemedText style={styles.buttonText}>Accept</ThemedText>
                     </TouchableOpacity>
+                  )}
+
+                {selectedAccommodation.status === "accepted" &&
+                  selectedAccommodation.accepted_by === studentId && (
+                    <>
+                      <TouchableOpacity
+                        style={styles.cancelAccommodationButton}
+                        onPress={() =>
+                          handleCancelAccommodation(selectedAccommodation.id)
+                        }
+                      >
+                        <Ionicons name="close-circle" size={20} color="#fff" />
+                        <ThemedText style={styles.buttonText}>
+                          Cancel
+                        </ThemedText>
+                      </TouchableOpacity>
+                      <ChatNow
+                        usrId1={selectedAccommodation.user_id}
+                        usrId2={selectedAccommodation.accepted_by || ""}
+                        uName={`${selectedAccommodation.creator?.first_name} ${selectedAccommodation.creator?.last_name}`}
+                      />
+                    </>
+                  )}
+
+                {selectedAccommodation.status === "accepted" &&
+                  selectedAccommodation.user_id === studentId && (
+                    <>
+                      <TouchableOpacity
+                        style={styles.cancelAccommodationButton}
+                        onPress={() =>
+                          handleCancelAccommodation(selectedAccommodation.id)
+                        }
+                      >
+                        <Ionicons name="close-circle" size={20} color="#fff" />
+                        <ThemedText style={styles.buttonText}>
+                          Reject
+                        </ThemedText>
+                      </TouchableOpacity>
+                      <ChatNow
+                        usrId1={selectedAccommodation.user_id}
+                        usrId2={selectedAccommodation.accepted_by || ""}
+                        uName={`${selectedAccommodation.acceptor?.first_name} ${selectedAccommodation.acceptor?.last_name}`}
+                      />
+                    </>
                   )}
 
                 {selectedAccommodation.user_id === studentId && (
@@ -872,6 +958,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#dc3545",
+    borderRadius: 8,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  cancelAccommodationButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ff9800",
+    borderRadius: 8,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  chatButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4caf50",
     borderRadius: 8,
     paddingVertical: 12,
     gap: 8,

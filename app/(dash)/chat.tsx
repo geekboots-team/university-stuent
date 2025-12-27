@@ -4,8 +4,9 @@ import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Conversation, ConversationUser } from "@/models/conversation.model";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -14,13 +15,13 @@ import {
   View,
 } from "react-native";
 
-
 export default function ChatScreen() {
   const { studentTkn, studentId, loading, setLoading } = useAppContext();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const router = useRouter();
 
   const fetchConversations = useCallback(async () => {
+    if (!studentId) return;
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -43,9 +44,11 @@ export default function ChatScreen() {
     }
   }, [studentId, setLoading]);
 
-  useEffect(() => {
-    if (studentTkn) fetchConversations();
-  }, [studentTkn, fetchConversations]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchConversations();
+    }, [fetchConversations])
+  );
 
   const handleChatPress = (chatId: string, userName: string) => {
     router.push({
