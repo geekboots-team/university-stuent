@@ -7,8 +7,9 @@ import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { AppliedClubs, AppliedUniversity } from "@/models/student.model";
-import { Support, SupportForm, SupportMessage } from "@/models/support.model";
+import { Support, SupportForm } from "@/models/support.model";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -55,11 +56,9 @@ const initialFormState: SupportForm = {
 };
 
 export default function SupportScreen() {
+  const router = useRouter();
   const { studentTkn, studentId, loading, setLoading } = useAppContext();
   const [tickets, setTickets] = useState<Support[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<Support | null>(null);
-  const [ticketMessages, setTicketMessages] = useState<SupportMessage[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [formData, setFormData] = useState<SupportForm>(initialFormState);
@@ -69,8 +68,6 @@ export default function SupportScreen() {
   >([]);
   const [studentClubs, setStudentClubs] = useState<AppliedClubs[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [newMessage, setNewMessage] = useState("");
-  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Fetch student's universities
   const fetchUniversities = useCallback(async () => {
@@ -127,21 +124,6 @@ export default function SupportScreen() {
       setLoading(false);
     }
   }, [setLoading, studentId]);
-
-  const fetchTicketMessages = useCallback(async (ticketId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("support_messages")
-        .select("*")
-        .eq("ticket_id", ticketId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      setTicketMessages(data || []);
-    } catch {
-      console.error("Error fetching ticket messages");
-    }
-  }, []);
 
   useEffect(() => {
     if (studentTkn) {
@@ -229,43 +211,17 @@ export default function SupportScreen() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedTicket) return;
-
-    try {
-      setSendingMessage(true);
-      const messageData = {
-        ticket_id: selectedTicket.id,
-        sender_id: studentId,
-        sender_role: "student",
-        message: newMessage.trim(),
-      };
-
-      const { error } = await supabase
-        .from("support_messages")
-        .insert(messageData);
-
-      if (error) throw error;
-
-      setNewMessage("");
-      fetchTicketMessages(selectedTicket.id);
-    } catch {
-      Alert.alert("Error", "Failed to send message");
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
   const openCreateModal = () => {
     setFormData({ ...initialFormState });
     setFormErrors({});
     setCreateModalVisible(true);
   };
 
-  const handleTicketPress = async (ticket: Support) => {
-    setSelectedTicket(ticket);
-    await fetchTicketMessages(ticket.id);
-    setModalVisible(true);
+  const handleTicketPress = (ticket: Support) => {
+    router.push({
+      pathname: "/(dash)/support-individual-chat",
+      params: { ticketId: ticket.id },
+    });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -352,140 +308,6 @@ export default function SupportScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  );
-
-  const renderMessageItem = ({ item }: { item: SupportMessage }) => {
-    const isStudent = item.sender_role === "student";
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isStudent ? styles.studentMessage : styles.supportMessage,
-        ]}
-      >
-        <ThemedText style={styles.messageText}>{item.message}</ThemedText>
-        <ThemedText style={styles.messageTime}>
-          {new Date(item.created_at).toLocaleString()}
-        </ThemedText>
-      </View>
-    );
-  };
-
-  const renderModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setModalVisible(false)}
-          >
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-
-          {selectedTicket && (
-            <>
-              <ThemedText style={styles.modalTitle}>
-                {selectedTicket.subject}
-              </ThemedText>
-
-              <View style={styles.ticketDetails}>
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Ticket ID:</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    #{selectedTicket.ticket_id}
-                  </ThemedText>
-                </View>
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Category:</ThemedText>
-                  <ThemedText style={styles.detailValue}>
-                    {selectedTicket.category.replace("_", " ")}
-                  </ThemedText>
-                </View>
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Priority:</ThemedText>
-                  <View
-                    style={[
-                      styles.priorityBadge,
-                      {
-                        backgroundColor: getPriorityColor(
-                          selectedTicket.priority
-                        ),
-                      },
-                    ]}
-                  >
-                    <ThemedText style={styles.badgeText}>
-                      {selectedTicket.priority}
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Status:</ThemedText>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: getStatusColor(selectedTicket.status),
-                      },
-                    ]}
-                  >
-                    <ThemedText style={styles.badgeText}>
-                      {selectedTicket.status.replace("_", " ")}
-                    </ThemedText>
-                  </View>
-                </View>
-              </View>
-
-              <ThemedText style={styles.messagesTitle}>Messages</ThemedText>
-
-              <FlatList
-                data={ticketMessages}
-                renderItem={renderMessageItem}
-                keyExtractor={(item) => item.id}
-                style={styles.messagesList}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <ThemedText style={styles.noMessages}>
-                    No messages yet
-                  </ThemedText>
-                }
-              />
-
-              {selectedTicket.status !== "closed" &&
-                selectedTicket.status !== "resolved" && (
-                  <View style={styles.messageInputContainer}>
-                    <ThemedInput
-                      placeholder="Type your message..."
-                      value={newMessage}
-                      onChangeText={setNewMessage}
-                      style={styles.messageInput}
-                    />
-                    <TouchableOpacity
-                      style={styles.sendButton}
-                      onPress={handleSendMessage}
-                      disabled={sendingMessage || !newMessage.trim()}
-                    >
-                      <Ionicons
-                        name="send"
-                        size={20}
-                        color={
-                          sendingMessage || !newMessage.trim()
-                            ? "#ccc"
-                            : Colors.light.tint
-                        }
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-            </>
-          )}
-        </View>
-      </View>
-    </Modal>
   );
 
   const renderCreateModal = () => (
@@ -725,7 +547,6 @@ export default function SupportScreen() {
         <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
-      {renderModal()}
       {renderCreateModal()}
     </ThemedView>
   );
@@ -949,7 +770,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: Platform.OS === "ios" ? 10 : 10,
+    bottom: Platform.OS === "ios" ? 10 : 20,
     width: 56,
     height: 56,
     borderRadius: 28,

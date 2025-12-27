@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Messages } from "@/models/conversation.model";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, StyleSheet, TouchableOpacity } from "react-native";
+import { Alert, Platform, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function IndividualChatScreen() {
   const { studentTkn, setLoading, studentId } = useAppContext();
@@ -133,16 +133,19 @@ export default function IndividualChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 4,
-  },
   backButton: {
     padding: 4,
     marginRight: 8,
+  },
+  headerTitle: {
+    alignItems: Platform.OS === "ios" ? "center" : "flex-start",
+  },
+  headerTitleText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    opacity: 0.8,
   },
 });

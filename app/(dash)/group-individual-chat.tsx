@@ -8,7 +8,13 @@ import { GroupMessage, Groups } from "@/models/group.model";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function GroupIndividualChatScreen() {
   const router = useRouter();
@@ -110,7 +116,6 @@ export default function GroupIndividualChatScreen() {
     }
   }, [group, setLoading]);
 
-  
   useEffect(() => {
     if (!group) return;
     fetchMessages();
@@ -239,20 +244,12 @@ export default function GroupIndividualChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 4,
-  },
   backButton: {
     padding: 4,
     marginRight: 8,
   },
   headerTitle: {
-    alignItems: "center",
+    alignItems: Platform.OS === "ios" ? "center" : "flex-start",
   },
   headerTitleText: {
     fontSize: 16,
