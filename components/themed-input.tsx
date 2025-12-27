@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 export type ThemedInputProps = TextInputProps & {
@@ -36,7 +37,7 @@ export function ThemedInput({
     { light: "#f5f5f5", dark: "#fff" },
     "background"
   );
-  const borderColor = error ? "#ff4444" : "#ccc";
+  const borderColor = error ? "#ff4444" : "#f0f0f0";
   const placeholderColor = placeholderTextColor ?? "#999";
 
   return (
@@ -73,6 +74,8 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: 5,
+    borderWidth: 1,
+    borderColor: Colors.light.helpBackground,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,

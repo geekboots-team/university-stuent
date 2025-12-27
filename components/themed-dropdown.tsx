@@ -48,7 +48,7 @@ export function ThemedDropdown({
     { light: "#f5f5f5", dark: "#fff" },
     "background"
   );
-  const borderColor = error ? "#ff4444" : "transparent";
+  const borderColor = error ? "#ff4444" : "#f0f0f0";
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -169,9 +169,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderRadius: 5,
+    borderWidth: 1,
+    borderColor: Colors.light.helpBackground,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderWidth: 1,
   },
   selectorText: {
     fontSize: 16,

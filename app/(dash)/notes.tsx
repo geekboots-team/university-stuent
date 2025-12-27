@@ -1,4 +1,5 @@
 import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
@@ -15,7 +16,6 @@ import {
   Modal,
   Platform,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -235,12 +235,12 @@ export default function NotesScreen() {
               </TouchableOpacity>
             </View>
 
-            <TextInput
+            <ThemedInput
               style={styles.textInput}
               placeholder="Write your note here..."
-              placeholderTextColor="#999"
               multiline
               value={noteContent}
+              numberOfLines={5}
               onChangeText={setNoteContent}
               autoFocus
             />
@@ -273,11 +273,11 @@ export default function NotesScreen() {
               </TouchableOpacity>
             </View>
 
-            <TextInput
+            <ThemedInput
               style={styles.textInput}
               placeholder="Write your note here..."
-              placeholderTextColor="#999"
               multiline
+              numberOfLines={5}
               value={noteContent}
               onChangeText={setNoteContent}
               autoFocus
@@ -392,14 +392,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
+    height: 200,
     padding: 16,
-    fontSize: 16,
     marginBottom: 16,
-    minHeight: 200,
     textAlignVertical: "top",
   },
 });
