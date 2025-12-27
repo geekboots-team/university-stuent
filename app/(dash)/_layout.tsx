@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
@@ -15,14 +15,13 @@ import { ProfileModal } from "@/components/profile-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { supabase } from "@/lib/supabase";
 import { isNotificationRead, Notification } from "@/models/notification.model";
 import { Ionicons } from "@expo/vector-icons";
 
 function CustomHeader({ title }: { title: string }) {
-  const colorScheme = useColorScheme();
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { studentId, studentRole } = useAppContext();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -169,7 +168,11 @@ function CustomHeader({ title }: { title: string }) {
           <IconSymbol
             size={28}
             name="questionmark.circle.fill"
-            color={Colors[colorScheme ?? "light"].background}
+            color={
+              pathname === "/support"
+                ? Colors.dark.tint
+                : Colors.light.background
+            }
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -180,7 +183,11 @@ function CustomHeader({ title }: { title: string }) {
             <IconSymbol
               size={28}
               name="bell.fill"
-              color={Colors[colorScheme ?? "light"].background}
+              color={
+                pathname === "/notifications"
+                  ? Colors.dark.tint
+                  : Colors.light.background
+              }
             />
             {unreadCount > 0 && (
               <View style={headerStyles.badgeContainer}>
@@ -198,7 +205,11 @@ function CustomHeader({ title }: { title: string }) {
           <IconSymbol
             size={28}
             name="person.circle.fill"
-            color={Colors[colorScheme ?? "light"].background}
+            color={
+              pathname === "/profile"
+                ? Colors.dark.tint
+                : Colors.light.background
+            }
           />
         </TouchableOpacity>
       </View>
