@@ -5,8 +5,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { supabase } from "@/lib/supabase";
 import { Messages } from "@/models/conversation.model";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function IndividualChatScreen() {
@@ -38,47 +39,50 @@ export default function IndividualChatScreen() {
     }
   }, [chatId, setLoading]);
 
-  useEffect(() => {
-    if (studentTkn) {
-      fetchMessages();
+  useFocusEffect(
+    useCallback(() => {
+      if (studentTkn) {
+        fetchMessages();
 
-      // Subscribe to realtime changes
-      const channel = supabase
-        .channel(`messages-${chatId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${chatId}`,
-          },
-          (payload) => {
-            if (payload.eventType === "INSERT") {
-              setMsgList((prev) => [...prev, payload.new as Messages]);
-            } else if (payload.eventType === "UPDATE") {
-              setMsgList((prev) =>
-                prev.map((msg) =>
-                  msg.id === payload.new.id ? (payload.new as Messages) : msg
-                )
-              );
-            } else if (payload.eventType === "DELETE") {
-              setMsgList((prev) =>
-                prev.filter((msg) => msg.id !== payload.old.id)
-              );
+        // Subscribe to realtime changes
+        const channel = supabase
+          .channel(`messages-${chatId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "messages",
+              filter: `conversation_id=eq.${chatId}`,
+            },
+            (payload) => {
+              if (payload.eventType === "INSERT") {
+                setMsgList((prev) => [...prev, payload.new as Messages]);
+              } else if (payload.eventType === "UPDATE") {
+                setMsgList((prev) =>
+                  prev.map((msg) =>
+                    msg.id === payload.new.id ? (payload.new as Messages) : msg
+                  )
+                );
+              } else if (payload.eventType === "DELETE") {
+                setMsgList((prev) =>
+                  prev.filter((msg) => msg.id !== payload.old.id)
+                );
+              }
             }
-          }
-        )
-        .subscribe();
+          )
+          .subscribe();
 
-      return () => {
-        channel.unsubscribe();
-      };
-    }
-  }, [studentTkn, chatId, fetchMessages]);
+        return () => {
+          channel.unsubscribe();
+        };
+      }
+    }, [studentTkn, chatId, fetchMessages])
+  );
 
   const handleBack = useCallback(() => {
     router.push("/(dash)/chat");
+    setMsgList([]);
   }, [router]);
 
   const handleSendMessage = useCallback(
@@ -138,7 +142,7 @@ export default function IndividualChatScreen() {
       />
       <ChatWindow
         messages={msgList}
-        currentUserId="current-user"
+        currentUserId={studentId!}
         isGroupChat={false}
         onSendMessage={handleSendMessage}
         inputPlaceholder="Type a message..."

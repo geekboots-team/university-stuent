@@ -95,14 +95,14 @@ export function ChatWindow({
     item: Messages;
     index: number;
   }) => {
-    const isOwn = item.sender.id === currentUserId;
+    const isOwn = item.sender_id === currentUserId;
     const showSenderName = isGroupChat && !isOwn && item.sender;
 
     // Check if we should show the sender name (first message or different sender)
     const previousMessage = index > 0 ? messages[index - 1] : null;
     const showName =
       showSenderName &&
-      (!previousMessage || previousMessage.sender.id !== item.sender.id);
+      (!previousMessage || previousMessage.sender_id !== item.sender_id);
 
     return (
       <View
@@ -181,9 +181,7 @@ export function ChatWindow({
         style={[
           styles.inputContainer,
           {
-            paddingBottom: Animated.add(
-              keyboardHeight, 10
-            ),
+            paddingBottom: Animated.add(keyboardHeight, 10),
           },
         ]}
       >
@@ -247,15 +245,14 @@ const styles = StyleSheet.create({
   messageBubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 18,
+    borderRadius: 16,
+    backgroundColor: Colors.light.tint,
   },
   ownMessageBubble: {
-    backgroundColor: Colors.light.tint,
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 3,
   },
   otherMessageBubble: {
-    backgroundColor: "rgba(132, 45, 28, 0.15)",
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 3,
   },
   messageText: {
     fontSize: 15,
@@ -265,7 +262,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   otherMessageText: {
-    color: Colors.light.text,
+    color: Colors.light.helpBackground,
   },
   messageTime: {
     fontSize: 11,
@@ -276,8 +273,8 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
   },
   otherMessageTime: {
-    color: Colors.light.text,
-    opacity: 0.5,
+    color: Colors.light.background,
+    opacity: 0.8,
   },
   emptyContainer: {
     flex: 1,

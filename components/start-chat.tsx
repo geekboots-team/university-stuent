@@ -50,15 +50,20 @@ export default function ChatNow({
   usrId1,
   usrId2,
   uName,
+  onPress,
 }: {
   usrId1: string;
   usrId2: string;
   uName: string;
+  onPress?: () => void;
 }) {
   const router = useRouter();
   const { studentId } = useAppContext();
 
   const triggerConversation = async () => {
+    if (onPress) {
+      onPress();
+    }
     const conversationId = await startConversation(usrId1, usrId2);
     if (conversationId) {
       router.push({

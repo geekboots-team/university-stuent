@@ -540,6 +540,7 @@ export default function AccommodationScreen() {
                         usrId1={selectedAccommodation.user_id}
                         usrId2={selectedAccommodation.accepted_by || ""}
                         uName={`${selectedAccommodation.creator?.first_name} ${selectedAccommodation.creator?.last_name}`}
+                        onPress={() => setModalVisible(false)}
                       />
                     </>
                   )}
@@ -562,6 +563,7 @@ export default function AccommodationScreen() {
                         usrId1={selectedAccommodation.user_id}
                         usrId2={selectedAccommodation.accepted_by || ""}
                         uName={`${selectedAccommodation.acceptor?.first_name} ${selectedAccommodation.acceptor?.last_name}`}
+                        onPress={() => setModalVisible(false)}
                       />
                     </>
                   )}
