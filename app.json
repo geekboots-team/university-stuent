@@ -13,7 +13,9 @@
       "bundleIdentifier": "com.geekboots.universitystudent",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -54,7 +56,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3ec16e25-283b-4dd9-83e0-3756b40f078b"
+        "projectId": "59c965ba-ca54-4887-919d-bb08c6bc2ff5"
       }
     }
   }
