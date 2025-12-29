@@ -19,6 +19,17 @@ export default function IndividualChatScreen() {
   const colorScheme = useColorScheme();
   const [msgList, setMsgList] = useState<Messages[]>([]);
 
+   const markMessageAsRead = useCallback(async (messageId: string) => {
+     try {
+       await supabase
+         .from("messages")
+         .update({ read_at: new Date().toISOString() })
+         .eq("id", messageId);
+     } catch {
+       // console.error("Error marking message as read:", error);
+     }
+   }, []);
+
   const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
@@ -42,18 +53,9 @@ export default function IndividualChatScreen() {
     } finally {
       setLoading(false);
     }
-  }, [chatId, setLoading]);
+  }, [chatId, setLoading, studentId, markMessageAsRead]);
 
-  const markMessageAsRead = useCallback(async (messageId: string) => {
-    try {
-      await supabase
-        .from("messages")
-        .update({ read_at: new Date().toISOString() })
-        .eq("id", messageId);
-    } catch {
-      // console.error("Error marking message as read:", error);
-    }
-  }, []);
+ 
 
   useFocusEffect(
     useCallback(() => {
