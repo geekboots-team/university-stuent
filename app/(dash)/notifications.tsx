@@ -5,6 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { isNotificationRead, Notification } from "@/models/notification.model";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -34,7 +35,8 @@ const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
-  const { studentId, studentRole, loading, setLoading } = useAppContext();
+  const { studentId, studentRole, loading, setLoading, updateBadgeCount } =
+    useAppContext();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifications, setFilteredNotifications] = useState<
     Notification[]
@@ -113,6 +115,9 @@ export default function NotificationsScreen() {
       );
 
       setNotifications(relevantNotifications || []);
+
+      // Update badge count
+      updateBadgeCount();
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -165,6 +170,9 @@ export default function NotificationsScreen() {
           n.id === notification.id ? { ...n, is_read: updatedIsRead } : n
         )
       );
+
+      // Update badge count
+      updateBadgeCount();
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -212,19 +220,21 @@ export default function NotificationsScreen() {
     fetchStudentClubs();
   }, [fetchStudentUniversities, fetchStudentClubs]);
 
-  useEffect(() => {
-    if (studentUniversities.length > 0 || studentClubs.length > 0) {
-      fetchNotifications();
-    } else if (studentId && studentRole) {
-      fetchNotifications();
-    }
-  }, [
-    studentUniversities,
-    studentClubs,
-    studentId,
-    studentRole,
-    fetchNotifications,
-  ]);
+  useFocusEffect(
+    useCallback(() => {
+      if (studentUniversities.length > 0 || studentClubs.length > 0) {
+        fetchNotifications();
+      } else if (studentId && studentRole) {
+        fetchNotifications();
+      }
+    }, [
+      studentUniversities,
+      studentClubs,
+      studentId,
+      studentRole,
+      fetchNotifications,
+    ])
+  );
 
   // Format date
   const formatDate = (dateString: string): string => {

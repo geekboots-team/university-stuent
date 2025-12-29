@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
@@ -106,6 +107,7 @@ interface AppContextType {
     compStatus: string
   ) => void;
   logoutCompany: () => void;
+  updateBadgeCount: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -149,6 +151,7 @@ const AppContext = createContext<AppContextType>({
   companyStatus: null,
   loginCompany: () => {},
   logoutCompany: () => {},
+  updateBadgeCount: async () => {},
 });
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
@@ -205,7 +208,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getUser = async (userTkn: string) => {
-    const { data, error } = await supabase.auth.getUser(userTkn ? userTkn : "");
+    const { data } = await supabase.auth.getUser(userTkn ? userTkn : "");
 
     if (data) {
       return data.user?.id;
@@ -214,8 +217,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkStudentLogin = async () => {
     try {
-      setLoading(true);
-
       const user = await getSecureItem("studentUSTkn");
       const userRef = await getSecureItem("studentUSRfTkn");
 
@@ -255,8 +256,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       logoutStudent();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -310,13 +309,123 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const upStudentStatus = async (status: string) => {
     setStudentStatus(status);
-    await setSecureItem("studentStatus", status);
+    await setSecureItem("studentUSStatus", status);
+  };
+
+  const updateBadgeCount = async () => {
+    if (!studentId || !studentRole) {
+      await Notifications.setBadgeCountAsync(0);
+      return;
+    }
+
+    try {
+      // Fetch user's universities
+      const { data: appliedData } = await supabase
+        .from("applied_universities")
+        .select("university_id")
+        .eq("user_id", studentId)
+        .eq("status", "active");
+
+      const userUniversities = appliedData
+        ? appliedData.map((item) => item.university_id)
+        : [];
+
+      // Fetch user's clubs
+      const { data: memberData } = await supabase
+        .from("applied_clubs")
+        .select("club_id")
+        .eq("user_id", studentId)
+        .eq("status", "active");
+
+      const userClubs = memberData
+        ? memberData.map((item) => item.club_id)
+        : [];
+
+      // Fetch notifications
+      const { data: notifications, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (!notifications) {
+        await Notifications.setBadgeCountAsync(0);
+        return;
+      }
+
+      // Filter relevant notifications
+      const relevantNotifications = notifications.filter((notification) => {
+        if (notification.recipient_type === "all") return true;
+        if (
+          notification.recipient_type === "specific" &&
+          notification.recipient_users?.includes(studentId)
+        )
+          return true;
+        if (
+          notification.recipient_type === "role" &&
+          notification.recipient_roles?.includes(studentRole)
+        )
+          return true;
+        if (
+          notification.recipient_type === "university" &&
+          notification.recipient_universities?.some((uni: string) =>
+            userUniversities.includes(uni)
+          )
+        )
+          return true;
+        if (
+          notification.recipient_type === "club" &&
+          notification.recipient_clubs &&
+          userClubs.includes(notification.recipient_clubs)
+        )
+          return true;
+        return false;
+      });
+
+      // Count unread
+      const unreadCount = relevantNotifications.filter((n) => {
+        if (!n.is_read || !studentId) return true;
+        return !n.is_read.some((read: any) => read.userId === studentId);
+      }).length;
+
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .is("read_at", null)
+        .neq("sender_id", studentId);
+
+      let totalUnread = unreadCount + (count || 0);
+
+      const { data: participantData } = await supabase
+        .from("group_participants")
+        .select("last_read_at, group_id")
+        .eq("user_id", studentId)
+        .single();
+
+      if (participantData) {
+        const { count: groupUnreadCount } = await supabase
+          .from("group_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("group_id", participantData.group_id)
+          .gt(
+            "created_at",
+            participantData?.last_read_at || new Date(0).toISOString()
+          );
+
+        totalUnread += groupUnreadCount || 0;
+      }
+
+      await Notifications.setBadgeCountAsync(totalUnread);
+    } catch (error) {
+      console.error("Error updating badge count:", error);
+      await Notifications.setBadgeCountAsync(0);
+    }
   };
 
   const checkAdminLogin = async () => {
     try {
-      setLoading(true);
-
       const storedAdmTkn = await getSecureItem("admTkn");
       const storedAdmRfTkn = await getSecureItem("adminRfTkn");
 
@@ -343,8 +452,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       logoutAdmin();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -383,7 +490,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkModeratorLogin = async () => {
     try {
-      setLoading(true);
       const storedModTkn = await getSecureItem("modTkn");
       const storedModRefTkn = await getSecureItem("modRefTkn");
 
@@ -419,8 +525,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       logoutModerator();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -464,7 +568,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkClubLogin = async () => {
     try {
-      setLoading(true);
       const storedModTkn = await getSecureItem("clubTkn");
       const storedModRefTkn = await getSecureItem("clubRefTkn");
 
@@ -501,8 +604,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       logoutClub();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -551,7 +652,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkCompanyLogin = async () => {
     try {
-      setLoading(true);
       const storedCompTkn = await getSecureItem("compTkn");
       const storedCompRefTkn = await getSecureItem("compRefTkn");
 
@@ -587,8 +687,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       logoutCompany();
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -644,6 +742,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     initializeAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -687,6 +786,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         companyStatus,
         loginCompany,
         logoutCompany,
+        updateBadgeCount,
         loading,
         setLoading,
       }}
