@@ -745,6 +745,85 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Real-time subscription for notifications
+  useEffect(() => {
+    if (!studentId) return;
+
+    const notificationsSubscription = supabase
+      .channel("notifications-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+        },
+        () => {
+          updateBadgeCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      notificationsSubscription.unsubscribe();
+    };
+  }, [studentId]);
+
+  // Real-time subscription for messages
+  useEffect(() => {
+    if (!studentId) return;
+
+    const messagesSubscription = supabase
+      .channel("messages-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          updateBadgeCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      messagesSubscription.unsubscribe();
+    };
+  }, [studentId]);
+
+  // Real-time subscription for group messages
+  useEffect(() => {
+    if (!studentId) return;
+
+    const groupMessagesSubscription = supabase
+      .channel("group-messages-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "group_messages",
+        },
+        () => {
+          updateBadgeCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      groupMessagesSubscription.unsubscribe();
+    };
+  }, [studentId]);
+
+  // Update badge count on initial load
+  useEffect(() => {
+    if (studentId && studentRole) {
+      updateBadgeCount();
+    }
+  }, [studentId, studentRole]);
+
   return (
     <AppContext.Provider
       value={{
