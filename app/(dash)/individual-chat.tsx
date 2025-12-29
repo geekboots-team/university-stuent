@@ -31,6 +31,11 @@ export default function IndividualChatScreen() {
         Alert.alert("Error", "Error fetching messages!");
       } else {
         setMsgList(data);
+        data.forEach((msg) => {
+          if (msg.sender_id !== studentId && !msg.read_at) {
+            markMessageAsRead(msg.id);
+          }
+        });
       }
     } catch {
       Alert.alert("Error", "Error fetching messages!");
@@ -38,6 +43,17 @@ export default function IndividualChatScreen() {
       setLoading(false);
     }
   }, [chatId, setLoading]);
+
+  const markMessageAsRead = useCallback(async (messageId: string) => {
+    try {
+      await supabase
+        .from("messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("id", messageId);
+    } catch {
+      // console.error("Error marking message as read:", error);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +74,10 @@ export default function IndividualChatScreen() {
             (payload) => {
               if (payload.eventType === "INSERT") {
                 setMsgList((prev) => [...prev, payload.new as Messages]);
+                if (payload.new.sender_id !== studentId) {
+                  markMessageAsRead(payload.new.id);
+                }
+                // Mark all previous unread messages as read
               } else if (payload.eventType === "UPDATE") {
                 setMsgList((prev) =>
                   prev.map((msg) =>
@@ -77,7 +97,7 @@ export default function IndividualChatScreen() {
           channel.unsubscribe();
         };
       }
-    }, [studentTkn, chatId, fetchMessages])
+    }, [studentTkn, chatId, fetchMessages, studentId, markMessageAsRead])
   );
 
   const handleBack = useCallback(() => {
@@ -106,7 +126,7 @@ export default function IndividualChatScreen() {
             .update({ last_message_at: new Date().toISOString() })
             .eq("id", chatId);
           if (conError) {
-            Alert.alert("Error", "Error updating conversation!");
+            Alert.alert("Error", JSON.stringify(conError));
           }
         }
       } catch {

@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
+import formatTime from "@/lib/timeFormat";
 import { Conversation, ConversationUser } from "@/models/conversation.model";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -16,7 +17,7 @@ import {
 } from "react-native";
 
 export default function ChatScreen() {
-  const { studentTkn, studentId, loading, setLoading } = useAppContext();
+  const { studentId, loading, setLoading } = useAppContext();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const router = useRouter();
 
@@ -33,10 +34,30 @@ export default function ChatScreen() {
           participant2:students!participant2_id(id, first_name, last_name)
         `
         )
-        .or(`participant1_id.eq.${studentId},participant2_id.eq.${studentId}`);
+        .or(`participant1_id.eq.${studentId},participant2_id.eq.${studentId}`)
+        .order("last_message_at", { ascending: false });
 
-      if (error) throw error;
-      setConversations(data);
+      if (error) return;
+
+      if (!error && data) {
+        const conversationsWithUnread = await Promise.all(
+          data.map(async (conv) => {
+            const { count } = await supabase
+              .from("messages")
+              .select("*", { count: "exact", head: true })
+              .eq("conversation_id", conv.id)
+              .is("read_at", null)
+              .neq("sender_id", studentId);
+
+            return {
+              ...conv,
+              unread_count: count || 0,
+            };
+          })
+        );
+
+        setConversations(conversationsWithUnread);
+      }
     } catch {
       Alert.alert("Error", "Error fetching conversations!");
     } finally {
@@ -80,11 +101,24 @@ export default function ChatScreen() {
         </View>
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
+            <View>
+              <ThemedText style={styles.chatName}>
+                {`${otherPersonName.first_name} ${otherPersonName.last_name}`}
+              </ThemedText>
+              <ThemedText style={styles.chatTime}>
+                {formatTime(item.last_message_at)}
+              </ThemedText>
+            </View>
             <ThemedText
-              style={styles.chatName}
-            >{`${otherPersonName.first_name} ${otherPersonName.last_name}`}</ThemedText>
-            <ThemedText style={styles.chatTime}>
-              {item.last_message_at}
+              style={
+                item.unread_count && item.unread_count > 0
+                  ? styles.bubble
+                  : undefined
+              }
+            >
+              {item.unread_count && item.unread_count > 0
+                ? item.unread_count
+                : null}
             </ThemedText>
           </View>
         </View>
@@ -225,5 +259,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+
+  bubble: {
+    backgroundColor: Colors.light.tint,
+    color: "#fff",
+    borderRadius: 18,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

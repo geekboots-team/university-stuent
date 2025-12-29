@@ -12,6 +12,7 @@ export interface Conversation {
   participant2: ConversationUser;
   created_at: string;
   last_message_at: string;
+  unread_count?: number;
 }
 
 export interface Messages {
