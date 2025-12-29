@@ -187,22 +187,49 @@ export default function GroupChatScreen() {
         return;
       }
 
-      const filteredData = data.filter((group) => {
-        // If group has a course requirement, check if student's course matches
-        if (group.course_id) {
-          return studentCourses.includes(group.course_id);
-        }
-        // If no course requirement, include the group
-        return true;
-      });
+      if (data) {
+        const filteredData = data.filter((group) => {
+          // If group has a course requirement, check if student's course matches
+          if (group.course_id) {
+            return studentCourses.includes(group.course_id);
+          }
+          // If no course requirement, include the group
+          return true;
+        });
 
-      setGroups(filteredData);
+        const dataWithUnread = await Promise.all(
+          filteredData.map(async (group) => {
+            const { data: participantData } = await supabase
+              .from("group_participants")
+              .select("last_read_at")
+              .eq("group_id", group.id)
+              .eq("user_id", studentId)
+              .single();
+
+            const { count } = await supabase
+              .from("group_messages")
+              .select("*", { count: "exact", head: true })
+              .eq("group_id", group.id)
+              .gt(
+                "created_at",
+                participantData?.last_read_at || new Date(0).toISOString()
+              );
+
+            return {
+              ...group,
+              unread_count: count || 0,
+            };
+          })
+        );
+
+        setGroups(dataWithUnread);
+      }
     } catch {
       Alert.alert("Error", "Failed to fetch groups");
     } finally {
       setLoading(false);
     }
-  }, [studentRole, setLoading, studentCourses, studentUniversity]);
+  }, [studentRole, setLoading, studentCourses, studentUniversity, studentId]);
 
   useEffect(() => {
     fetchGroups();
@@ -226,14 +253,24 @@ export default function GroupChatScreen() {
       <View style={styles.groupInfo}>
         <View style={styles.groupHeader}>
           <ThemedText style={styles.groupName}>{item.name}</ThemedText>
-        </View>
-        <View style={styles.groupMeta}>
           <ThemedText style={styles.memberCount}>
             {item.group_for === "all" && "Mixed Group"}
             {item.group_for === "mentor" && "Mentor Group"}
             {item.group_for === "student" && "Student Group"}
           </ThemedText>
         </View>
+
+        <ThemedText
+          style={
+            item.unread_count && item.unread_count > 0
+              ? styles.bubble
+              : undefined
+          }
+        >
+          {item.unread_count && item.unread_count > 0
+            ? item.unread_count
+            : null}
+        </ThemedText>
       </View>
     </TouchableOpacity>
   );
@@ -304,11 +341,14 @@ const styles = StyleSheet.create({
   },
   groupInfo: {
     flex: 1,
-  },
-  groupHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  groupHeader: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 2,
   },
   groupName: {
@@ -350,5 +390,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
+  },
+  bubble: {
+    backgroundColor: Colors.light.tint,
+    color: "#fff",
+    borderRadius: 18,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

@@ -16,6 +16,7 @@ export interface Groups {
   group_for: "mentor" | "student" | "all";
   created_at: string;
   updated_at: string;
+  unread_count?: number;
 }
 
 export interface GroupParticipants {
@@ -23,6 +24,7 @@ export interface GroupParticipants {
   group_id: string;
   user_id: string;
   joined_at: string;
+  last_read_at: string;
 }
 
 export interface GroupMessage {

@@ -38,6 +38,18 @@ export default function GroupIndividualChatScreen() {
     if (params.groupName) setGroupName(params.groupName);
   }, [params]);
 
+  const markMessageAsRead = useCallback(async (gId: string) => {
+    try {
+      await supabase
+        .from("group_participants")
+        .update({ last_read_at: new Date().toISOString() })
+        .eq("group_id", gId)
+        .eq("user_id", studentId);
+    } catch {
+      // console.error("Error marking message as read:", error);
+    }
+  }, []);
+
   const handleBack = useCallback(() => {
     router.push("/(dash)/group-chat");
     setMessages([]);
@@ -111,12 +123,13 @@ export default function GroupIndividualChatScreen() {
       }
 
       setMessages(data || []);
+      markMessageAsRead(group.id);
     } catch {
       Alert.alert("Error", "Failed to fetch messages");
     } finally {
       setLoading(false);
     }
-  }, [group, setLoading]);
+  }, [group, setLoading, markMessageAsRead]);
 
   useFocusEffect(
     useCallback(() => {
@@ -150,6 +163,7 @@ export default function GroupIndividualChatScreen() {
               } else {
                 setMessages((prev) => [...prev, newMsg]);
               }
+              markMessageAsRead(group.id);
             } else if (payload.eventType === "UPDATE") {
               setMessages((prev) =>
                 prev.map((msg) =>
