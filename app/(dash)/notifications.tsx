@@ -35,8 +35,7 @@ const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
-  const { studentId, studentRole, loading, setLoading, updateBadgeCount } =
-    useAppContext();
+  const { studentId, studentRole, loading, setLoading } = useAppContext();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifications, setFilteredNotifications] = useState<
     Notification[]
@@ -115,9 +114,6 @@ export default function NotificationsScreen() {
       );
 
       setNotifications(relevantNotifications || []);
-
-      // Update badge count
-      updateBadgeCount();
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -170,9 +166,6 @@ export default function NotificationsScreen() {
           n.id === notification.id ? { ...n, is_read: updatedIsRead } : n
         )
       );
-
-      // Update badge count
-      updateBadgeCount();
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
