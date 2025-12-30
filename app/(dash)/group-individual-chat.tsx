@@ -26,7 +26,7 @@ export default function GroupIndividualChatScreen() {
   // const groupId = params.groupId || "1";
   // const senderType = params.senderType || "student";
   const colorScheme = useColorScheme();
-  const { setLoading, studentId } = useAppContext();
+  const { setLoading, studentId, updateBadgeCount } = useAppContext();
   const [group, setGroup] = useState<Groups>();
   const [groupId, setGroupId] = useState<string>();
   const [groupName, setGroupName] = useState<string>();
@@ -38,17 +38,22 @@ export default function GroupIndividualChatScreen() {
     if (params.groupName) setGroupName(params.groupName);
   }, [params]);
 
-  const markMessageAsRead = useCallback(async (gId: string) => {
-    try {
-      await supabase
-        .from("group_participants")
-        .update({ last_read_at: new Date().toISOString() })
-        .eq("group_id", gId)
-        .eq("user_id", studentId);
-    } catch {
-      // console.error("Error marking message as read:", error);
-    }
-  }, []);
+  const markMessageAsRead = useCallback(
+    async (gId: string) => {
+      try {
+        await supabase
+          .from("group_participants")
+          .update({ last_read_at: new Date().toISOString() })
+          .eq("group_id", gId)
+          .eq("user_id", studentId);
+        // Update badge count after marking as read
+        await updateBadgeCount();
+      } catch {
+        // console.error("Error marking message as read:", error);
+      }
+    },
+    [studentId, updateBadgeCount]
+  );
 
   const handleBack = useCallback(() => {
     router.push("/(dash)/group-chat");

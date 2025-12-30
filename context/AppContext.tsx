@@ -1,7 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { Alert } from "react-native";
 
 // Helper functions for SecureStore
@@ -312,7 +318,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     await setSecureItem("studentUSStatus", status);
   };
 
-  const updateBadgeCount = async () => {
+  const updateBadgeCount = useCallback(async () => {
     if (!studentId || !studentRole) {
       await Notifications.setBadgeCountAsync(0);
       return;
@@ -422,7 +428,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error updating badge count:", error);
       await Notifications.setBadgeCountAsync(0);
     }
-  };
+  }, [studentId, studentRole]);
 
   const checkAdminLogin = async () => {
     try {
@@ -758,8 +764,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           schema: "public",
           table: "notifications",
         },
-        () => {
-          updateBadgeCount();
+        async () => {
+          await updateBadgeCount();
         }
       )
       .subscribe();
@@ -767,7 +773,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       notificationsSubscription.unsubscribe();
     };
-  }, [studentId]);
+  }, [studentId, updateBadgeCount]);
 
   // Real-time subscription for messages
   useEffect(() => {
@@ -782,8 +788,26 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           schema: "public",
           table: "messages",
         },
-        () => {
-          updateBadgeCount();
+        async (payload) => {
+          // Update badge count for all message events
+          await updateBadgeCount();
+
+          // Send local notification for new messages when app is not in foreground
+          if (
+            payload.eventType === "INSERT" &&
+            payload.new.sender_id !== studentId
+          ) {
+            // Schedule notification if app is in background
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "New Message",
+                body: payload.new.message || "You have a new message",
+                sound: true,
+                badge: (await Notifications.getBadgeCountAsync()) + 1,
+              },
+              trigger: null, // Show immediately
+            });
+          }
         }
       )
       .subscribe();
@@ -791,7 +815,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       messagesSubscription.unsubscribe();
     };
-  }, [studentId]);
+  }, [studentId, updateBadgeCount]);
 
   // Real-time subscription for group messages
   useEffect(() => {
@@ -806,8 +830,25 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           schema: "public",
           table: "group_messages",
         },
-        () => {
-          updateBadgeCount();
+        async (payload) => {
+          // Update badge count for all message events
+          await updateBadgeCount();
+
+          // Send local notification for new group messages when sender is not current user
+          if (
+            payload.eventType === "INSERT" &&
+            payload.new.sender_id !== studentId
+          ) {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "New Group Message",
+                body: payload.new.message || "You have a new group message",
+                sound: true,
+                badge: (await Notifications.getBadgeCountAsync()) + 1,
+              },
+              trigger: null, // Show immediately
+            });
+          }
         }
       )
       .subscribe();
@@ -815,14 +856,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       groupMessagesSubscription.unsubscribe();
     };
-  }, [studentId]);
+  }, [studentId, updateBadgeCount]);
 
   // Update badge count on initial load
   useEffect(() => {
     if (studentId && studentRole) {
       updateBadgeCount();
     }
-  }, [studentId, studentRole]);
+  }, [studentId, studentRole, updateBadgeCount]);
 
   return (
     <AppContext.Provider

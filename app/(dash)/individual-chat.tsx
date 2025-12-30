@@ -11,7 +11,8 @@ import React, { useCallback, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity } from "react-native";
 
 export default function IndividualChatScreen() {
-  const { studentTkn, setLoading, studentId } = useAppContext();
+  const { studentTkn, setLoading, studentId, updateBadgeCount } =
+    useAppContext();
   const router = useRouter();
   const params = useLocalSearchParams<{ chatId: string; userName: string }>();
   const chatId = params.chatId;
@@ -19,16 +20,21 @@ export default function IndividualChatScreen() {
   const colorScheme = useColorScheme();
   const [msgList, setMsgList] = useState<Messages[]>([]);
 
-   const markMessageAsRead = useCallback(async (messageId: string) => {
-     try {
-       await supabase
-         .from("messages")
-         .update({ read_at: new Date().toISOString() })
-         .eq("id", messageId);
-     } catch {
-       // console.error("Error marking message as read:", error);
-     }
-   }, []);
+  const markMessageAsRead = useCallback(
+    async (messageId: string) => {
+      try {
+        await supabase
+          .from("messages")
+          .update({ read_at: new Date().toISOString() })
+          .eq("id", messageId);
+        // Update badge count after marking as read
+        await updateBadgeCount();
+      } catch {
+        // console.error("Error marking message as read:", error);
+      }
+    },
+    [updateBadgeCount]
+  );
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -54,8 +60,6 @@ export default function IndividualChatScreen() {
       setLoading(false);
     }
   }, [chatId, setLoading, studentId, markMessageAsRead]);
-
- 
 
   useFocusEffect(
     useCallback(() => {

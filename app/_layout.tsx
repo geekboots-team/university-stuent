@@ -35,6 +35,8 @@ function RootLayoutContent() {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
       }),
     });
 
@@ -44,6 +46,26 @@ function RootLayoutContent() {
     if (studentId) {
       updateBadgeCount();
     }
+
+    // Listen for notification received (when app is in foreground)
+    const receivedSubscription = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        // Update badge count when notification is received
+        updateBadgeCount();
+      }
+    );
+
+    // Listen for notification response (when user taps on notification)
+    const responseSubscription =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        // Update badge count when user interacts with notification
+        updateBadgeCount();
+      });
+
+    return () => {
+      receivedSubscription.remove();
+      responseSubscription.remove();
+    };
   }, [studentId, updateBadgeCount]);
 
   const handleBack = () => {
