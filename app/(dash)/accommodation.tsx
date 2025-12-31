@@ -9,7 +9,6 @@ import { useAppContext } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Accommodation, AccommodationForm } from "@/models/accommodation.model";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -39,7 +38,6 @@ const initialFormState: AccommodationForm = {
 
 export default function AccommodationScreen() {
   const { studentTkn, studentId, loading, setLoading } = useAppContext();
-  const router = useRouter();
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [myAccommodations, setMyAccommodations] = useState<Accommodation[]>([]);
   const [acceptedAccommodations, setAcceptedAccommodations] = useState<
@@ -123,7 +121,18 @@ export default function AccommodationScreen() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAccommodations(data || []);
+      if (userGender) {
+        const filteredData = data?.filter((item: Accommodation) => {
+          if (
+            item.is_female === "Yes" &&
+            userGender?.toLowerCase() !== "female"
+          ) {
+            return false;
+          }
+          return true;
+        });
+        setAccommodations(filteredData || []);
+      } else setAccommodations(data || []);
     } catch {
       Alert.alert("Error", "Error fetching accommodations!");
     } finally {
@@ -363,6 +372,9 @@ export default function AccommodationScreen() {
               fetchAccommodations();
               if (activeTab === "accepted") {
                 fetchAcceptAccommodations();
+              }
+              if (activeTab === "my") {
+                fetchMyAccommodations();
               }
             } catch {
               Alert.alert("Error", "Failed to cancel accommodation");

@@ -52,6 +52,7 @@ export interface Student {
   applied_clubs: AppliedClubs[];
   status: "active" | "approved" | "suspended" | "pending";
   created_at: string;
+  expo_push_token?: string; // Add this line
 }
 
 export interface StudentLogin {
