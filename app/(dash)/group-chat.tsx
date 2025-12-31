@@ -241,6 +241,42 @@ export default function GroupChatScreen() {
     }, [fetchGroups])
   );
 
+  useEffect(() => {
+    if (!studentId) return;
+
+    const channel = supabase
+      .channel("group_chat_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "group_messages",
+        },
+        (payload) => {
+          const newMessage = payload.new;
+          if (newMessage.sender_id !== studentId) {
+            setGroups((prevGroups) =>
+              prevGroups.map((group) => {
+                if (group.id === newMessage.group_id) {
+                  return {
+                    ...group,
+                    unread_count: (group.unread_count || 0) + 1,
+                  };
+                }
+                return group;
+              })
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [studentId]);
+
   const renderGroupItem = ({ item }: { item: Groups }) => (
     <TouchableOpacity
       style={styles.groupItem}
