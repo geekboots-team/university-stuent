@@ -68,7 +68,69 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchConversations();
-    }, [fetchConversations])
+
+      // Subscribe to new messages for realtime unread count updates
+      const messagesSubscription = supabase
+        .channel("chat-messages")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+          },
+          (payload) => {
+            const newMessage = payload.new as {
+              conversation_id: string;
+              sender_id: string;
+            };
+
+            // Only update if the message is not from the current user
+            if (newMessage.sender_id !== studentId) {
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.id === newMessage.conversation_id
+                    ? { ...conv, unread_count: (conv.unread_count || 0) + 1 }
+                    : conv
+                )
+              );
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "messages",
+          },
+          (payload) => {
+            const updatedMessage = payload.new as {
+              conversation_id: string;
+              read_at: string | null;
+            };
+
+            // If message was marked as read, decrement unread count
+            if (updatedMessage.read_at) {
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.id === updatedMessage.conversation_id
+                    ? {
+                        ...conv,
+                        unread_count: Math.max((conv.unread_count || 1) - 1, 0),
+                      }
+                    : conv
+                )
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(messagesSubscription);
+      };
+    }, [fetchConversations, studentId])
   );
 
   const handleChatPress = (chatId: string, userName: string) => {
