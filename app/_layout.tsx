@@ -13,7 +13,7 @@ import { Colors } from "@/constants/theme";
 import { AppProvider, useAppContext } from "@/context/AppContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useEffect } from "react";
-import { TouchableOpacity } from "react-native";
+import { Alert, TouchableOpacity } from "react-native";
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
@@ -25,7 +25,10 @@ function RootLayoutContent() {
     const requestPermissions = async () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
-        console.log("Notification permissions not granted");
+        Alert.alert(
+          "Permission not granted",
+          "Notification permissions not granted"
+        );
       }
     };
 
@@ -55,12 +58,43 @@ function RootLayoutContent() {
       }
     );
 
+    const handleNotificationResponse = (
+      response: Notifications.NotificationResponse
+    ) => {
+      const data = response.notification.request.content.data;
+      if (data?.type === "individual" && data?.chatId && data?.userName) {
+        router.push({
+          pathname: "/(dash)/individual-chat",
+          params: {
+            chatId: data.chatId as string,
+            userName: data.userName as string,
+          },
+        });
+      } else if (data?.type === "group" && data?.groupId && data?.groupName) {
+        router.push({
+          pathname: "/(dash)/group-individual-chat",
+          params: {
+            groupId: data.groupId as string,
+            groupName: data.groupName as string,
+          },
+        });
+      }
+      // Update badge count when user interacts with notification
+      updateBadgeCount();
+    };
+
+    // Check if app was opened from a notification (cold start)
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        handleNotificationResponse(response);
+      }
+    });
+
     // Listen for notification response (when user taps on notification)
     const responseSubscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        // Update badge count when user interacts with notification
-        updateBadgeCount();
-      });
+      Notifications.addNotificationResponseReceivedListener(
+        handleNotificationResponse
+      );
 
     return () => {
       receivedSubscription.remove();
