@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { BACKGROUND_NOTIFICATION_TASK } from "@/utils/backgroundNotifications";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
@@ -65,6 +66,10 @@ async function registerForPushNotificationsAsync() {
       const projectId =
         Constants?.expoConfig?.extra?.eas?.projectId ??
         Constants?.easConfig?.projectId;
+
+      // Register background task
+      await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+
       if (!projectId) {
         // console.log("Project ID not found");
       }

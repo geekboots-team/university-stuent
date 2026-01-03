@@ -1,3 +1,4 @@
+import "@/utils/backgroundNotifications";
 import {
   DarkTheme,
   DefaultTheme,
